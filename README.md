@@ -13,5 +13,5 @@
 meson setup builddir
 cd builddir
 ninja
-# run main
+# run ./main
 ```
