@@ -17,12 +17,12 @@ static void activate(GtkApplication* app, gpointer user_data)
   box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 5);
   gtk_container_add (GTK_CONTAINER (window), box);
 
-  buttonIdling = gtk_button_new_with_label ("Idling");
-  buttonProduction = gtk_button_new_with_label ("Production");
-  buttonQueu = gtk_button_new_with_label ("Queuing");
-  buttonRefuelling = gtk_button_new_with_label ("Refuelling");
-  buttonTravel = gtk_button_new_with_label ("Travelling/Repositioning");
-  buttonWarmup = gtk_button_new_with_label ("Warm-up/Cooling");
+  buttonIdling = gtk_toggle_button_new_with_label ("Idling");
+  buttonProduction = gtk_toggle_button_new_with_label ("Production");
+  buttonQueu = gtk_toggle_button_new_with_label ("Queuing");
+  buttonRefuelling = gtk_toggle_button_new_with_label ("Refuelling");
+  buttonTravel = gtk_toggle_button_new_with_label ("Travelling/Repositioning");
+  buttonWarmup = gtk_toggle_button_new_with_label ("Warm-up/Cooling");
 
   gtk_box_pack_start (GTK_BOX (box), buttonQueu, TRUE, TRUE, boxPacking);
   gtk_box_pack_start (GTK_BOX (box), buttonTravel, TRUE, TRUE, boxPacking);
@@ -33,7 +33,7 @@ static void activate(GtkApplication* app, gpointer user_data)
 
   gtk_container_set_border_width (GTK_CONTAINER(box), 5);
   gtk_widget_show_all (window);
-  gtk_window_fullscreen (GTK_WINDOW (window));
+  //gtk_window_fullscreen (GTK_WINDOW (window));
 }
 
 int main(int argc, char **argv)
