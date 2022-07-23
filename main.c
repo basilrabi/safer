@@ -2,23 +2,10 @@
 
 static void toggle_buttons(GtkWidget *button, gpointer data)
 {
-  GtkWidget *box;
-  box = gtk_widget_get_parent (button);
-  GList *children = gtk_container_get_children (GTK_CONTAINER (box));
   if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (button)))
   {
     g_print(gtk_widget_get_name(button));
     g_print("\n");
-
-    // When a button is toggled on, deactivate other toggled buttons.
-    while (children != NULL)
-    {
-      if (children->data != button)
-      {
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (children->data), FALSE);
-      }
-      children = children->next;
-    }
   }
 }
 
@@ -39,12 +26,12 @@ static void activate(GtkApplication* app, gpointer user_data)
   box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 5);
   gtk_container_add (GTK_CONTAINER (window), box);
 
-  buttonIdling = gtk_toggle_button_new_with_label ("Idling");
-  buttonProduction = gtk_toggle_button_new_with_label ("Production");
-  buttonQueu = gtk_toggle_button_new_with_label ("Queuing");
-  buttonRefuelling = gtk_toggle_button_new_with_label ("Refuelling");
-  buttonTravel = gtk_toggle_button_new_with_label ("Travelling/Repositioning");
-  buttonWarmup = gtk_toggle_button_new_with_label ("Warm-up/Cooling");
+  buttonIdling = gtk_radio_button_new_with_label (NULL, "Idling");
+  buttonProduction = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (buttonIdling), "Production");
+  buttonQueu = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (buttonIdling), "Queuing");
+  buttonRefuelling = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (buttonIdling), "Refuelling");
+  buttonTravel = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (buttonIdling), "Travelling/Repositioning");
+  buttonWarmup = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (buttonIdling), "Warm-up/Cooling");
 
   gtk_widget_set_name(buttonIdling, "idling");
   gtk_widget_set_name(buttonProduction, "production");
@@ -68,10 +55,9 @@ static void activate(GtkApplication* app, gpointer user_data)
   g_signal_connect (buttonWarmup, "clicked", G_CALLBACK (toggle_buttons), NULL);
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (buttonWarmup), TRUE);
-
   gtk_container_set_border_width (GTK_CONTAINER(box), 5);
   gtk_widget_show_all (window);
-  //gtk_window_fullscreen (GTK_WINDOW (window));
+  gtk_window_fullscreen (GTK_WINDOW (window));
 }
 
 int main(int argc, char **argv)
