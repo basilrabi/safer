@@ -13,5 +13,6 @@
 meson setup builddir
 cd builddir
 ninja
-# run ./main
+cp ../theme.css ~/theme.css
+./main
 ```

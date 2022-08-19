@@ -11,6 +11,8 @@ static void toggle_buttons(GtkWidget *button, gpointer data)
 
 static void activate(GtkApplication* app, gpointer user_data)
 {
+  char *home_dir;
+  GtkCssProvider *cssProvider;
   GtkWidget *box;
   GtkWidget *buttonIdling;
   GtkWidget *buttonProduction;
@@ -19,7 +21,6 @@ static void activate(GtkApplication* app, gpointer user_data)
   GtkWidget *buttonTravel;
   GtkWidget *buttonWarmup;
   GtkWidget *window;
-
   guint boxPacking = 0;
 
   window = gtk_application_window_new (app);
@@ -33,12 +34,18 @@ static void activate(GtkApplication* app, gpointer user_data)
   buttonTravel = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (buttonIdling), "Travelling/Repositioning");
   buttonWarmup = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (buttonIdling), "Warm-up/Cooling");
 
+  cssProvider = gtk_css_provider_new();
+  home_dir = (char*)g_get_home_dir ();
+  gtk_css_provider_load_from_path(cssProvider, strcat(home_dir, "/theme.css") , NULL);
+  gtk_style_context_add_provider_for_screen(gdk_screen_get_default(), GTK_STYLE_PROVIDER(cssProvider), GTK_STYLE_PROVIDER_PRIORITY_USER);
+
   gtk_widget_set_name(buttonIdling, "idling");
   gtk_widget_set_name(buttonProduction, "production");
   gtk_widget_set_name(buttonQueu, "queu");
   gtk_widget_set_name(buttonRefuelling, "refuelling");
   gtk_widget_set_name(buttonTravel, "travel");
   gtk_widget_set_name(buttonWarmup, "warmup");
+
 
   gtk_box_pack_start (GTK_BOX (box), buttonProduction, TRUE, TRUE, boxPacking);
   gtk_box_pack_start (GTK_BOX (box), buttonQueu, TRUE, TRUE, boxPacking);
