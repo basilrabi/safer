@@ -9,15 +9,15 @@
 1. systemd-devel
 1. meson
 
-## Building
+## Installing
 
 ```
 meson setup builddir
 cd builddir
-ninja
-cp ../theme.css ~/theme.css
-./main
+meson install
 ```
+
+The program can be run using the command `gui`.
 
 ## Development Notes
 

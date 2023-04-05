@@ -6,7 +6,7 @@ systemd_dep = dependency('libsystemd', required: true)
 cmd = run_command('bash', '-c', 'echo $HOME', check: false)
 home_dir = cmd.stdout().strip()
 
-executable('gui', 'gui.c', dependencies : [gtk_dep, hiredis_dep, systemd_dep], install: true, install_dir: home_dir)
+executable('gui', 'gui.c', dependencies : [gtk_dep, hiredis_dep, systemd_dep], install: true, install_dir: home_dir / 'bin')
 install_data('theme.css', install_dir: home_dir)
 
 run_target('cppcheck', command : ['cppcheck', '--enable=all', '--project=' + join_paths(meson.build_root(), 'compile_commands.json')])
