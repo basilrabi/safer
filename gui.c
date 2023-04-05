@@ -1,16 +1,23 @@
 #include <gtk/gtk.h>
+#include <hiredis/hiredis.h>
+#include <systemd/sd-journal.h>
 
 static void toggle_buttons(GtkWidget *button, gpointer data)
 {
-  FILE *fptr;
-  char file[30];
-  strcpy(file, data);
   if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (button)))
   {
-    fptr = fopen(strcat(file, "/status"), "w+");
-    fprintf(fptr, gtk_widget_get_name(button));
-    fprintf(fptr, "\n");
-    fclose(fptr);
+    redisContext *context = redisConnect("localhost", 6379);
+    if (context == NULL || context->err) {
+      if (context) {
+        sd_journal_send("MESSAGE=Connection error: %s", context->errstr, "PRIORITY=%i", LOG_ERR, NULL);
+        redisFree(context);
+      } else {
+        sd_journal_send("MESSAGE=%s", "Connection error: can't allocate redis context", "PRIORITY=%i", LOG_ERR, NULL);
+      }
+      exit(1);
+    }
+    redisReply *reply = (redisReply *) redisCommand(context, "SET %s %s", "equipment_status", gtk_widget_get_name(button));
+    freeReplyObject(reply);
   }
 }
 
@@ -77,7 +84,7 @@ int main(int argc, char **argv)
   GtkApplication *app;
   int status;
 
-  app = gtk_application_new(NULL, G_APPLICATION_FLAGS_NONE);
+  app = gtk_application_new(NULL, G_APPLICATION_DEFAULT_FLAGS);
   g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
   status = g_application_run(G_APPLICATION(app), argc, argv);
   g_object_unref(app);
