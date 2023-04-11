@@ -16,7 +16,9 @@ static void toggle_buttons(GtkWidget *button, gpointer data)
       }
       exit(1);
     }
-    redisReply *reply = (redisReply *) redisCommand(context, "SET %s %s", "equipment_status", gtk_widget_get_name(button));
+    redisReply *reply = (redisReply *) redisCommand(context, "SET equipment_status %s", gtk_widget_get_name(button));
+    freeReplyObject(reply);
+    reply = (redisReply *) redisCommand(context, "SET status_refresh 1");
     freeReplyObject(reply);
   }
 }
@@ -42,8 +44,8 @@ static void activate(GtkApplication* app, gpointer user_data)
   buttonIdling = gtk_radio_button_new_with_label (NULL, "Idling");
   buttonProduction = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (buttonIdling), "Production");
   buttonQueu = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (buttonIdling), "Queuing");
-  buttonRefuelling = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (buttonIdling), "Refuelling");
-  buttonTravel = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (buttonIdling), "Travelling/Repositioning");
+  buttonRefuelling = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (buttonIdling), "Refueling");
+  buttonTravel = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (buttonIdling), "Traveling/Repositioning");
   buttonWarmup = gtk_radio_button_new_with_label_from_widget (GTK_RADIO_BUTTON (buttonIdling), "Warm-up/Cooling");
 
   cssProvider = gtk_css_provider_new();
@@ -54,10 +56,10 @@ static void activate(GtkApplication* app, gpointer user_data)
 
   gtk_widget_set_name(buttonIdling, "idle");
   gtk_widget_set_name(buttonProduction, "production");
-  gtk_widget_set_name(buttonQueu, "queu");
+  gtk_widget_set_name(buttonQueu, "queue");
   gtk_widget_set_name(buttonRefuelling, "refuel");
   gtk_widget_set_name(buttonTravel, "travel");
-  gtk_widget_set_name(buttonWarmup, "warmup");
+  gtk_widget_set_name(buttonWarmup, "warm-up");
 
   gtk_box_pack_start (GTK_BOX (box), buttonProduction, TRUE, TRUE, boxPacking);
   gtk_box_pack_start (GTK_BOX (box), buttonQueu, TRUE, TRUE, boxPacking);
