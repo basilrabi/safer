@@ -6,6 +6,7 @@ systemd_dep = dependency('libsystemd', required: true)
 cmd = run_command('bash', '-c', 'echo $HOME', check: false)
 home_dir = cmd.stdout().strip()
 
+executable('background', 'background.c', dependencies : [hiredis_dep, systemd_dep], install: true, install_dir: home_dir / 'bin')
 executable('gui', 'gui.c', dependencies : [gtk_dep, hiredis_dep, systemd_dep], install: true, install_dir: home_dir / 'bin')
 install_data('theme.css', install_dir: home_dir)
 
