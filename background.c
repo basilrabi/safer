@@ -1,11 +1,13 @@
 #include <hiredis/hiredis.h>
+#include <stdlib.h>
 #include <systemd/sd-journal.h>
 #include <time.h>
 
 int main(int argc, char **argv)
 {
   char time_buffer[20];
-  char message[100];
+  char *location = "LOCATION"; // Temporary placeholder for GNSS query
+  char *message;
   int connected = 0;
   // Number of seconds before the new equipment status is recorded to allow making mistakes
   int seconds_refresh_cutoff = 10;
@@ -14,8 +16,8 @@ int main(int argc, char **argv)
   redisContext *context = NULL;
   redisReply *equipment_status = NULL;
   redisReply *previous_equipment_status = NULL;
-  redisReply *set_command = NULL;
   redisReply *refresh_status = NULL;
+  redisReply *set_command = NULL;
   struct tm *time_print;
   time_t current_time;
   time_t refresh_time;
@@ -33,6 +35,9 @@ int main(int argc, char **argv)
       connected = 1;
     }
   }
+
+  // TODO: Connect via serial connection
+
   time(&refresh_time);
 
   while (connected == 1) {
@@ -44,7 +49,9 @@ int main(int argc, char **argv)
         previous_equipment_status == NULL ||
         refresh_status == NULL) {
       sd_journal_send("MESSAGE=%s", "Failed to get redis response.", "PRIORITY=%i", LOG_ERR, NULL);
+      continue;
     }
+
     if (equipment_status->type == REDIS_REPLY_STRING) {
       if (refresh_status->type == REDIS_REPLY_STRING &&
           strcmp(refresh_status->str, "1") == 0) {
@@ -53,16 +60,17 @@ int main(int argc, char **argv)
           if ((refresh_time + seconds_refresh_cutoff) <= current_time) {
             set_command = (redisReply *) redisCommand(context, "SET status_refresh 0");
             freeReplyObject(set_command);
-            // TODO: GNSS querry
+            // TODO: GNSS query
             time_print = localtime(&current_time);
             strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print);
-            message[0] = '\0';
-            strcat(message, time_buffer);
+            message = (char *) malloc((strlen(time_buffer) + strlen(equipment_status->str) + strlen(location) + 3) * sizeof(char));
+            strcpy(message, time_buffer);
             strcat(message, " ");
             strcat(message, equipment_status->str);
             strcat(message, " ");
-            strcat(message, "LOCATION");
+            strcat(message, location);
             set_command = (redisReply *) redisCommand(context, "RPUSH messages %s", message);
+            free(message);
             freeReplyObject(set_command);
             refresh_time = current_time;
           }
@@ -73,16 +81,17 @@ int main(int argc, char **argv)
         }
       } else {
         if ((refresh_time + seconds_location_period) <= current_time) {
-          // TODO: GNSS querry
+          // TODO: GNSS query
           time_print = localtime(&current_time);
           strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print);
-          message[0] = '\0';
-          strcat(message, time_buffer);
+          message = (char *) malloc((strlen(time_buffer) + strlen(equipment_status->str) + strlen(location) + 3) * sizeof(char));
+          strcpy(message, time_buffer);
           strcat(message, " ");
           strcat(message, equipment_status->str);
           strcat(message, " ");
-          strcat(message, "LOCATION");
+          strcat(message, location);
           set_command = (redisReply *) redisCommand(context, "RPUSH messages %s", message);
+          free(message);
           freeReplyObject(set_command);
           refresh_time = current_time;
         }
