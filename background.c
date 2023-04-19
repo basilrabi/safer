@@ -154,7 +154,6 @@ int main(int argc, char **argv)
             freeReplyObject(set_command);
           }
           free(message);
-          freeReplyObject(set_command);
           refresh_time = current_time;
         }
       }

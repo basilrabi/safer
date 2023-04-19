@@ -16,27 +16,52 @@ static void toggle_buttons(GtkWidget *button, gpointer data)
       } else {
         sd_journal_send("MESSAGE=%s", "Connection error: can't allocate redis context", "PRIORITY=%i", LOG_ERR, NULL);
       }
-      exit(1);
+      return;
     }
     previous = redisCommand(context, "GET equipment_status");
     if (previous == NULL) {
       sd_journal_send("MESSAGE=%s", "Failed to get redis response after pressing button.", "PRIORITY=%i", LOG_ERR, NULL);
-      exit(1);
+      return;
     }
     if (previous->type == REDIS_REPLY_STRING) {
       reply = (redisReply *) redisCommand(context, "SET previous_equipment_status %s", previous->str);
-      freeReplyObject(reply);
+      if (reply == NULL) {
+        sd_journal_send("MESSAGE=%s", "Failed to set previous_equipment_status.", "PRIORITY=%i", LOG_ERR, NULL);
+        return;
+      } else {
+        freeReplyObject(reply);
+      }
       if (strcmp(previous->str, gtk_widget_get_name(button)) != 0) {
         reply = (redisReply *) redisCommand(context, "SET equipment_status %s", gtk_widget_get_name(button));
-        freeReplyObject(reply);
+        if (reply == NULL) {
+          sd_journal_send("MESSAGE=%s", "Failed to set previous_equipment_status.", "PRIORITY=%i", LOG_ERR, NULL);
+          return;
+        } else {
+          freeReplyObject(reply);
+        }
         reply = (redisReply *) redisCommand(context, "SET status_refresh 1");
-        freeReplyObject(reply);
+        if (reply == NULL) {
+          sd_journal_send("MESSAGE=%s", "Failed to set status_refresh.", "PRIORITY=%i", LOG_ERR, NULL);
+          return;
+        } else {
+          freeReplyObject(reply);
+        }
       }
     } else {
       reply = (redisReply *) redisCommand(context, "SET equipment_status %s", gtk_widget_get_name(button));
-      freeReplyObject(reply);
+      if (reply == NULL) {
+        sd_journal_send("MESSAGE=%s", "Failed to set fresh equipment_status.", "PRIORITY=%i", LOG_ERR, NULL);
+        return;
+      } else {
+        freeReplyObject(reply);
+      }
       reply = (redisReply *) redisCommand(context, "SET status_refresh 1");
-      freeReplyObject(reply);
+      if (reply == NULL) {
+        sd_journal_send("MESSAGE=%s", "Failed to set fresh status_refresh.", "PRIORITY=%i", LOG_ERR, NULL);
+        return;
+      } else {
+        freeReplyObject(reply);
+      }
     }
     freeReplyObject(previous);
   }
