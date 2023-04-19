@@ -69,8 +69,7 @@ static void toggle_buttons(GtkWidget *button, gpointer data)
 
 static void activate(GtkApplication* app, gpointer user_data)
 {
-  char *home_dir;
-  char *css;
+  char *css = (char *) user_data;
   GtkCssProvider *cssProvider;
   GtkWidget *box;
   GtkWidget *buttonIdling;
@@ -94,10 +93,7 @@ static void activate(GtkApplication* app, gpointer user_data)
   buttonWarmup = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON (buttonIdling), "Warm-up/Cooling");
 
   cssProvider = gtk_css_provider_new();
-  home_dir = (char *) g_get_home_dir();
-  css = malloc(strlen(home_dir) + 1);
-  strcpy(css, home_dir);
-  gtk_css_provider_load_from_path(cssProvider, strcat(css, "/theme.css") , NULL);
+  gtk_css_provider_load_from_path(cssProvider, css, NULL);
   gtk_style_context_add_provider_for_screen(gdk_screen_get_default(), GTK_STYLE_PROVIDER(cssProvider), GTK_STYLE_PROVIDER_PRIORITY_USER);
 
   gtk_widget_set_name(buttonIdling, "idle");
@@ -130,10 +126,19 @@ static void activate(GtkApplication* app, gpointer user_data)
 int main(int argc, char **argv)
 {
   GtkApplication *app;
+  char *home_dir = (char *) g_get_home_dir();
+  char *css;
+  int buffer_size;
   int status;
 
+  buffer_size = strlen(home_dir) + 11;
+  css = (char *) malloc(buffer_size * sizeof(char));
+  memset(css, 0, buffer_size * sizeof(char));
+  strcpy(css, home_dir);
+  strcat(css, "/theme.css");
+
   app = gtk_application_new(NULL, G_APPLICATION_DEFAULT_FLAGS);
-  g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
+  g_signal_connect(app, "activate", G_CALLBACK(activate), css);
   status = g_application_run(G_APPLICATION(app), argc, argv);
   g_object_unref(app);
 
