@@ -73,7 +73,7 @@ int main(int argc, char **argv)
         sd_journal_send("MESSAGE=%s", "Invalid character count.", "PRIORITY=%i", LOG_ERR, NULL);
         continue;
       }
-      buffer_size = total_characters + status_queue->elements;
+      buffer_size = total_characters + (status_queue->elements * 2);
       messages = (char *) malloc(buffer_size * sizeof(char));
       memset(messages, 0, buffer_size * sizeof(char));
       strcpy(messages, status_queue->element[0]->str);
@@ -96,7 +96,12 @@ int main(int argc, char **argv)
             strcmp(previous_equipment_status->str, equipment_status->str) == 0) {
           if ((refresh_time + seconds_refresh_cutoff) <= current_time) {
             set_command = redisCommand(context, "SET status_refresh 0");
-            freeReplyObject(set_command);
+            if (set_command == NULL) {
+              sd_journal_send("MESSAGE=%s", "Failed to set status_refresh.", "PRIORITY=%i", LOG_ERR, NULL);
+              continue;
+            } else {
+              freeReplyObject(set_command);
+            }
             // TODO: GNSS query
             time_print = localtime(&current_time);
             strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print);
@@ -109,13 +114,23 @@ int main(int argc, char **argv)
             strcat(message, " ");
             strcat(message, location);
             set_command = redisCommand(context, "RPUSH messages %s", message);
+            if (set_command == NULL) {
+              sd_journal_send("MESSAGE=%s", "Failed to get redis response while pushing update.", "PRIORITY=%i", LOG_ERR, NULL);
+              continue;
+            } else {
+              freeReplyObject(set_command);
+            }
             free(message);
-            freeReplyObject(set_command);
             refresh_time = current_time;
           }
         } else {
           set_command = redisCommand(context, "SET previous_equipment_status %s", equipment_status->str);
-          freeReplyObject(set_command);
+          if (set_command == NULL) {
+            sd_journal_send("MESSAGE=%s", "Failed to set previous_equipment_status.", "PRIORITY=%i", LOG_ERR, NULL);
+            continue;
+          } else {
+            freeReplyObject(set_command);
+          }
           refresh_time = current_time;
         }
       } else {
@@ -132,6 +147,12 @@ int main(int argc, char **argv)
           strcat(message, " ");
           strcat(message, location);
           set_command = redisCommand(context, "RPUSH messages %s", message);
+          if (set_command == NULL) {
+            sd_journal_send("MESSAGE=%s", "Failed to get redis response while pushing location update.", "PRIORITY=%i", LOG_ERR, NULL);
+            continue;
+          } else {
+            freeReplyObject(set_command);
+          }
           free(message);
           freeReplyObject(set_command);
           refresh_time = current_time;
