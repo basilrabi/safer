@@ -1,51 +1,59 @@
+#define PCRE2_CODE_UNIT_WIDTH 8
+
 #include <hiredis/hiredis.h>
-//#include <pcre2.h>
+#include <pcre2.h>
 #include <stdlib.h>
 #include <systemd/sd-journal.h>
 #include <time.h>
-#include<unistd.h>
+#include <unistd.h>
 
-/* static int capture_pattern(const char *source, char *datetime, char *status, char *location) { */
-/*   \\ The source pattern is like: 2023-04-19-13:07:13 warm-up LOCATION */
-/*   const char *pattern = "(\\d{4}-\\d{2}-\\d{2}-\\d{2}:\\d{2}:\\d{2})\\s+([a-z\-])\\s+(LOCATION)"; */
-/*   int error_code; */
-/*   int matches; */
-/*   pcre2_code *re; */
-/*   PCRE2_SIZE error_offset; */
-/*   PCRE2_SIZE *ovector; */
-/*   re = pcre2_compile(pattern, PCRE2_ZERO_TERMINATED, 0, &error_code, &error_offset, NULL); */
-/*   pcre2_match_data *match_data; */
-/*   match_data = pcre2_match_data_create_from_pattern(re, NULL); */
-/*   matches = pcre2_match(re, pattern, PCRE2_ZERO_TERMINATED, 0, 0, match_data, NULL); */
-/*   if (datetime != NULL) { */
-/*     free(datetime); */
-/*   } */
-/*   if (status != NULL) { */
-/*     free(status); */
-/*   } */
-/*   if (location != NULL) { */
-/*     free(location); */
-/*   } */
-/*   if (matches == 3) { */
-/*     ovector = pcre2_get_ovector_pointer(match_data); */
-/*     datetime = (char*) malloc(sizeof(char) * (ovector[2] - ovector[1] + 1)); */
-/*     memcpy(datetime, &source[ovector[1]], ovector[2] - ovector[1]); */
-/*     datetime[ovector[2] - ovector[1]] = '\0'; */
-/*     status = (char*) malloc(sizeof(char) * (ovector[4] - ovector[3] + 1)); */
-/*     memcpy(status, &source[ovector[3]], ovector[4] - ovector[3]); */
-/*     status[ovector[4] - ovector[3]] = '\0'; */
-/*     location = (char*) malloc(sizeof(char) * (ovector[6] - ovector[5] + 1)); */
-/*     memcpy(location, &source[ovector[5]], ovector[6] - ovector[5]); */
-/*     location[ovector[6] - ovector[5]] = '\0';) */
-/*   } */
-/*   pcre2_code_free(re); */
-/*   pcre2_match_data_free(match_data); */
-/*   return matches; */
-/* } */
+static void capture_pattern(const char *source, char *datetime, char *status, char *location) {
+  const PCRE2_SPTR pattern = (PCRE2_SPTR) "^(\\d{4}-\\d{2}-\\d{2}-\\d{2}:\\d{2}:\\d{2})\\s+([a-z\\-]+)\\s+(LOCATION).*";
+  int error_code;
+  int matches;
+  pcre2_code *re;
+  PCRE2_SIZE error_offset;
+  re = pcre2_compile(pattern, PCRE2_ZERO_TERMINATED, 0, &error_code, &error_offset, NULL);
+  if (re == NULL) {
+    PCRE2_UCHAR buffer[256];
+    pcre2_get_error_message(error_code, buffer, sizeof(buffer));
+    sd_journal_send("MESSAGE=%s", "PCRE2 compilation failed at offset %d: %s", (int) error_offset, buffer, "PRIORITY=%i", LOG_ERR, NULL);
+    return;
+  }
+  pcre2_match_data *match_data;
+  match_data = pcre2_match_data_create_from_pattern(re, NULL);
+  matches = pcre2_match(re, (PCRE2_SPTR) source, strlen(source), 0, 0, match_data, NULL);
+  if (matches < 0) {
+    switch(matches) {
+      case PCRE2_ERROR_NOMATCH:
+        sd_journal_send("MESSAGE=%s", "PCRE2 no matches", "PRIORITY=%i", LOG_ERR, NULL);
+        break;
+      default:
+        sd_journal_send("MESSAGE=%s", "PCRE2 matching error %d", matches, "PRIORITY=%i", LOG_ERR, NULL);
+        break;
+    }
+    pcre2_match_data_free(match_data);
+    pcre2_code_free(re);
+    return;
+  }
+
+  PCRE2_SIZE *ovector = pcre2_get_ovector_pointer(match_data);
+  PCRE2_SPTR substring_datetime = (PCRE2_SPTR) source + ovector[2];
+  strncpy(datetime, (char *) substring_datetime, ovector[3] - ovector[2]);
+  datetime[ovector[3] - ovector[2]] = '\0';
+  PCRE2_SPTR substring_status = (PCRE2_SPTR) source + ovector[4];
+  strncpy(status, (char *) substring_status, ovector[5] - ovector[4]);
+  status[ovector[5] - ovector[4]] = '\0';
+  PCRE2_SPTR substring_location = (PCRE2_SPTR) source + ovector[6];
+  strncpy(location, (char *) substring_location, ovector[7] - ovector[6]);
+  location[ovector[7] - ovector[6]] = '\0';
+
+  pcre2_code_free(re);
+  pcre2_match_data_free(match_data);
+  return;
+}
 
 static int send_messages(redisContext *context) {
-  //char *captured_datetime;
-  //char *captured_equipment_status;
   //char *new_captured_datetime;
   //char *new_captured_equipment_status;
   //char *sub_date_time;
@@ -59,6 +67,9 @@ static int send_messages(redisContext *context) {
     output = 1;
   } else {
     if (status_queue->type == REDIS_REPLY_ARRAY) {
+      char captured_datetime[20];
+      char captured_equipment_status[11];
+      char captured_location[10];
       char *messages;
       int buffer_size;
       int counter;
@@ -71,6 +82,7 @@ static int send_messages(redisContext *context) {
       memset(messages, 0, buffer_size * sizeof(char));
       strcpy(messages, status_queue->element[0]->str);
       strcat(messages, "\n");
+      capture_pattern(status_queue->element[0]->str, captured_datetime, captured_equipment_status, captured_location);
       for (counter = 1; counter < status_queue->elements; counter++) {
         strcat(messages, status_queue->element[counter]->str);
         strcat(messages, "\n");
@@ -113,14 +125,15 @@ static int send_messages(redisContext *context) {
 /*     holder[idx] = new[counter]; */
 /*     counter += 1; */
 /*   } */
-/*   strcat(holder, '\0'); */
+/*   strcat(holder, "\0"); */
 /* } */
 
 int main(int argc, char **argv)
 {
-  const int message_limit = 10;           // Number of messages to be queued before sending
-  const int seconds_refresh_cutoff = 10;  // Number of seconds before the new equipment status is recorded to allow making mistakes
-  const int seconds_location_period = 30; // Number of seconds between location queries
+  // TODO: return defaults
+  const int message_limit = 3;           // 10- Number of messages to be queued before sending
+  const int seconds_refresh_cutoff = 3;  // 10- Number of seconds before the new equipment status is recorded to allow making mistakes
+  const int seconds_location_period = 6; // 30- Number of seconds between location queries
 
   char time_buffer[20];
   char *location = "LOCATION"; // Temporary placeholder for GNSS query

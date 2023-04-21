@@ -1,15 +1,35 @@
 project('data_management_equipment_utilization_capture', 'c')
-gtk_dep = dependency('gtk+-3.0')
-hiredis_dep = dependency('hiredis')
+
+gtk_dep = dependency('gtk+-3.0', required: true)
+hiredis_dep = dependency('hiredis', required: true)
+pcre_dep = dependency('libpcre2-8', required: true)
 systemd_dep = dependency('libsystemd', required: true)
-#pcre_dep = dependency('pcre2')
 
 cmd = run_command('bash', '-c', 'echo $HOME', check: false)
 home_dir = cmd.stdout().strip()
 
-executable('background', 'background.c', dependencies : [hiredis_dep, systemd_dep], install: true, install_dir: home_dir / 'bin')
-#executable('background', 'background.c', dependencies : [hiredis_dep, pcre_dep, systemd_dep], install: true, install_dir: home_dir / 'bin')
-executable('gui', 'gui.c', dependencies : [gtk_dep, hiredis_dep, systemd_dep], install: true, install_dir: home_dir / 'bin')
+executable(
+  'background',
+  'background.c',
+  dependencies : [hiredis_dep, pcre_dep, systemd_dep],
+  install: true,
+  install_dir: home_dir / 'bin'
+)
+executable(
+  'gui',
+  'gui.c',
+  dependencies : [gtk_dep, hiredis_dep, systemd_dep],
+  install: true,
+  install_dir: home_dir / 'bin'
+)
 install_data('theme.css', install_dir: home_dir)
 
-run_target('cppcheck', command : ['cppcheck', '--enable=all', '--project=' + join_paths(meson.build_root(), 'compile_commands.json')])
+run_target(
+  'cppcheck',
+  command : [
+    'cppcheck',
+    '--enable=all',
+    '--project=' + join_paths(meson.build_root(),
+    'compile_commands.json')
+  ]
+)
