@@ -11,7 +11,9 @@ static void capture_pattern(const char *source,
                             char *datetime,
                             char *status,
                             char *location) {
-  const PCRE2_SPTR pattern = (PCRE2_SPTR) "^(\\d{4}-\\d{2}-\\d{2}-\\d{2}:\\d{2}:\\d{2})\\s+([a-z\\-]+)\\s+(LOCATION).*";
+  const PCRE2_SPTR pattern =
+    (PCRE2_SPTR)
+    "^(\\d{4}-\\d{2}-\\d{2}-\\d{2}:\\d{2}:\\d{2})\\s+([a-z\\-]+)\\s+(LOCATION).*";
   int error_code;
   int matches;
   pcre2_code *re;
@@ -106,11 +108,13 @@ static int prepare_message(redisContext *context) {
   redisReply *status_queue = NULL;
   status_queue = redisCommand(context, "LRANGE messages 0 -1");
   if (status_queue == NULL) {
-    sd_journal_send("MESSAGE=%s",
-                    "Failed to get status queue while attempting to send message.",
-                    "PRIORITY=%i",
-                    LOG_ERR,
-                    NULL);
+    sd_journal_send(
+      "MESSAGE=%s",
+      "Failed to get status queue while attempting to send message.",
+      "PRIORITY=%i",
+      LOG_ERR,
+      NULL
+    );
     output = 1;
   } else {
     if (status_queue->type == REDIS_REPLY_ARRAY) {
@@ -142,10 +146,13 @@ static int prepare_message(redisContext *context) {
                         new_captured_datetime,
                         new_captured_equipment_status,
                         new_captured_location);
-        str_difference(captured_datetime, new_captured_datetime, datetime_substr);
+        str_difference(captured_datetime,
+                       new_captured_datetime,
+                       datetime_substr);
         strcat(messages, datetime_substr);
         strcat(messages, " ");
-        if (strcmp(captured_equipment_status, new_captured_equipment_status) != 0) {
+        if (strcmp(captured_equipment_status,
+                   new_captured_equipment_status) != 0) {
           strcat(messages, new_captured_equipment_status);
           strcat(messages, " ");
         }
@@ -178,9 +185,12 @@ static int prepare_message(redisContext *context) {
 
 int main(int argc, char **argv)
 {
-  const int message_limit = 10;           // Number of messages to be queued before sending
-  const int seconds_refresh_cutoff = 10;  // Number of seconds before the new equipment status is recorded to allow making mistakes
-  const int seconds_location_period = 30; // Number of seconds between location queries
+  // Number of messages to be queued before sending
+  const int message_limit = 10;
+  // Number of seconds before the new equipment status is recorded to allow making mistakes
+  const int seconds_refresh_cutoff = 10;
+  // Number of seconds between location queries
+  const int seconds_location_period = 30;
 
   char time_buffer[20];
   char *location = "LOCATION"; // Temporary placeholder for GNSS query
@@ -230,7 +240,8 @@ int main(int argc, char **argv)
     sleep(1);
     time(&current_time);
     equipment_status = redisCommand(context, "GET equipment_status");
-    previous_equipment_status = redisCommand(context, "GET previous_equipment_status");
+    previous_equipment_status = redisCommand(context,
+                                             "GET previous_equipment_status");
     refresh_status = redisCommand(context, "GET status_refresh");
     status_queue = redisCommand(context, "LRANGE messages 0 -1");
     if (equipment_status == NULL ||
@@ -255,7 +266,8 @@ int main(int argc, char **argv)
       if (refresh_status->type == REDIS_REPLY_STRING &&
           strcmp(refresh_status->str, "1") == 0) {
         if (previous_equipment_status->type == REDIS_REPLY_STRING &&
-            strcmp(previous_equipment_status->str, equipment_status->str) == 0) {
+            strcmp(previous_equipment_status->str,
+                   equipment_status->str) == 0) {
           if ((refresh_time + seconds_refresh_cutoff) <= current_time) {
             set_command = redisCommand(context, "SET status_refresh 0");
             if (set_command == NULL) {
@@ -270,8 +282,14 @@ int main(int argc, char **argv)
             }
             // TODO: GNSS query
             time_print = localtime(&current_time);
-            strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print);
-            buffer_size = strlen(time_buffer) + strlen(equipment_status->str) + strlen(location) + 3;
+            strftime(time_buffer,
+                     sizeof(time_buffer),
+                     "%Y-%m-%d-%H:%M:%S",
+                     time_print);
+            buffer_size = strlen(time_buffer)
+              + strlen(equipment_status->str)
+              + strlen(location)
+              + 3;
             message = (char *) malloc(buffer_size * sizeof(char));
             memset(message, 0, buffer_size * sizeof(char));
             strcpy(message, time_buffer);
@@ -281,10 +299,13 @@ int main(int argc, char **argv)
             strcat(message, location);
             set_command = redisCommand(context, "RPUSH messages %s", message);
             if (set_command == NULL) {
-              sd_journal_send("MESSAGE=%s",
-                              "Failed to get redis response while pushing update.",
-                              "PRIORITY=%i",
-                              LOG_ERR, NULL);
+              sd_journal_send(
+                "MESSAGE=%s",
+                "Failed to get redis response while pushing update.",
+                "PRIORITY=%i",
+                LOG_ERR,
+                NULL
+              );
               continue;
             } else {
               freeReplyObject(set_command);
@@ -312,8 +333,14 @@ int main(int argc, char **argv)
         if ((refresh_time + seconds_location_period) <= current_time) {
           // TODO: GNSS query
           time_print = localtime(&current_time);
-          strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print);
-          buffer_size = strlen(time_buffer) + strlen(equipment_status->str) + strlen(location) + 3;
+          strftime(time_buffer,
+                   sizeof(time_buffer),
+                   "%Y-%m-%d-%H:%M:%S",
+                   time_print);
+          buffer_size = strlen(time_buffer)
+            + strlen(equipment_status->str)
+            + strlen(location)
+            + 3;
           message = (char *) malloc(buffer_size * sizeof(char));
           memset(message, 0, buffer_size * sizeof(char));
           strcpy(message, time_buffer);
@@ -323,11 +350,13 @@ int main(int argc, char **argv)
           strcat(message, location);
           set_command = redisCommand(context, "RPUSH messages %s", message);
           if (set_command == NULL) {
-            sd_journal_send("MESSAGE=%s",
-                            "Failed to get redis response while pushing location update.",
-                            "PRIORITY=%i",
-                            LOG_ERR,
-                            NULL);
+            sd_journal_send(
+              "MESSAGE=%s",
+              "Failed to get redis response while pushing location update.",
+              "PRIORITY=%i",
+              LOG_ERR,
+              NULL
+            );
             continue;
           } else {
             freeReplyObject(set_command);
