@@ -109,23 +109,56 @@ static void activate(GtkApplication* app, gpointer user_data)
 {
   char *css = (char *) user_data;
   GtkCssProvider *cssProvider;
-  GtkWidget *box;
+  GtkWidget *boxActivity = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+  GtkWidget *boxPersonnel = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+  GtkWidget *boxPersonnelOperator = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+  GtkWidget *boxPersonnelSupervisor = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+  GtkWidget *boxLabelOperator = gtk_label_new("Operator");
+  GtkWidget *boxLabelSupervisor = gtk_label_new("Supervisor");
   GtkWidget *buttonIdling;
   GtkWidget *buttonProduction;
   GtkWidget *buttonQueu;
   GtkWidget *buttonRefuelling;
   GtkWidget *buttonTravel;
   GtkWidget *buttonWarmup;
-  GtkWidget *window;
+  GtkWidget *comboBoxSupervisor = gtk_combo_box_text_new();
+  GtkWidget *comboBoxOperator = gtk_combo_box_text_new();
+  GtkWidget *notebook = gtk_notebook_new();
+  GtkWidget *tabLabelActivity = gtk_label_new("Activity");
+  GtkWidget *tabLabelPersonnel = gtk_label_new("Personnel");
+  GtkWidget *window = gtk_application_window_new(app);
   guint boxPacking = 0;
 
-  window = gtk_application_window_new (app);
-  box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 5);
-  gtk_container_add (GTK_CONTAINER(window), box);
+  gtk_container_add(GTK_CONTAINER(window), notebook);
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook),
+                           boxPersonnel,
+                           tabLabelPersonnel);
 
-  buttonIdling = gtk_radio_button_new_with_label(
-    NULL, "Idling"
+  // TODO: content for personnel
+  gtk_box_pack_start(
+    GTK_BOX(boxPersonnelOperator), boxLabelOperator, FALSE, FALSE, boxPacking
   );
+  gtk_box_pack_start(
+    GTK_BOX(boxPersonnelOperator), comboBoxOperator, TRUE, TRUE, boxPacking
+  );
+  gtk_box_pack_start(
+    GTK_BOX(boxPersonnelSupervisor), boxLabelSupervisor, FALSE, FALSE, boxPacking
+  );
+  gtk_box_pack_start(
+    GTK_BOX(boxPersonnelSupervisor), comboBoxSupervisor, TRUE, TRUE, boxPacking
+  );
+  gtk_box_pack_start(
+    GTK_BOX(boxPersonnel), boxPersonnelOperator, TRUE, TRUE, boxPacking
+  );
+  gtk_box_pack_start(
+    GTK_BOX(boxPersonnel), boxPersonnelSupervisor, TRUE, TRUE, boxPacking
+  );
+
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook),
+                           boxActivity,
+                           tabLabelActivity);
+
+  buttonIdling = gtk_radio_button_new_with_label(NULL, "Idling");
   buttonProduction = gtk_radio_button_new_with_label_from_widget(
     GTK_RADIO_BUTTON(buttonIdling), "Production"
   );
@@ -155,12 +188,24 @@ static void activate(GtkApplication* app, gpointer user_data)
   gtk_widget_set_name(buttonTravel, "travel");
   gtk_widget_set_name(buttonWarmup, "warm-up");
 
-  gtk_box_pack_start(GTK_BOX(box), buttonProduction, TRUE, TRUE, boxPacking);
-  gtk_box_pack_start(GTK_BOX(box), buttonQueu, TRUE, TRUE, boxPacking);
-  gtk_box_pack_start(GTK_BOX(box), buttonTravel, TRUE, TRUE, boxPacking);
-  gtk_box_pack_start(GTK_BOX(box), buttonRefuelling, TRUE, TRUE, boxPacking);
-  gtk_box_pack_start(GTK_BOX(box), buttonIdling, TRUE, TRUE, boxPacking);
-  gtk_box_pack_start(GTK_BOX(box), buttonWarmup, TRUE, TRUE, boxPacking);
+  gtk_box_pack_start(
+    GTK_BOX(boxActivity), buttonProduction, TRUE, TRUE, boxPacking
+  );
+  gtk_box_pack_start(
+    GTK_BOX(boxActivity), buttonQueu, TRUE, TRUE, boxPacking
+  );
+  gtk_box_pack_start(
+    GTK_BOX(boxActivity), buttonTravel, TRUE, TRUE, boxPacking
+  );
+  gtk_box_pack_start(
+    GTK_BOX(boxActivity), buttonRefuelling, TRUE, TRUE, boxPacking
+  );
+  gtk_box_pack_start(
+    GTK_BOX(boxActivity), buttonIdling, TRUE, TRUE, boxPacking
+  );
+  gtk_box_pack_start(
+    GTK_BOX(boxActivity), buttonWarmup, TRUE, TRUE, boxPacking
+  );
 
   g_signal_connect(buttonIdling,
                   "clicked",
@@ -188,7 +233,7 @@ static void activate(GtkApplication* app, gpointer user_data)
                    NULL);
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(buttonWarmup), TRUE);
-  gtk_container_set_border_width (GTK_CONTAINER(box), 5);
+  gtk_container_set_border_width (GTK_CONTAINER(boxActivity), 5);
   gtk_widget_show_all (window);
   gtk_window_fullscreen (GTK_WINDOW(window));
 }

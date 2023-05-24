@@ -7,7 +7,7 @@
 1. gtk3-devel
 1. hiredis-devel
 1. meson
---1. pcre2-devel
+1. pcre2-devel
 1. systemd-devel
 
 ## Installing
