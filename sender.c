@@ -10,66 +10,35 @@
 #include <time.h>
 #include <unistd.h>
 
-static void capture_pattern(const char *source,
-                            char *datetime,
-                            char *status,
-                            char *location) {
-  const PCRE2_SPTR pattern =
-    (PCRE2_SPTR)
-    "^(\\d{4}-\\d{2}-\\d{2}-\\d{2}:\\d{2}:\\d{2})\\s+([a-z\\-]+)\\s+(LOCATION).*";
+static void capture_pattern(const char *source, char *datetime, char *status, char *location) {
+  const PCRE2_SPTR pattern = (PCRE2_SPTR) "^(\\d{4}-\\d{2}-\\d{2}-\\d{2}:\\d{2}:\\d{2})\\s+([a-z\\-]+)\\s+(LOCATION).*";
   int error_code;
   int matches;
   pcre2_code *re;
   PCRE2_SIZE error_offset;
-  re = pcre2_compile(pattern,
-                     PCRE2_ZERO_TERMINATED,
-                     0,
-                     &error_code,
-                     &error_offset,
-                     NULL);
+  re = pcre2_compile(pattern, PCRE2_ZERO_TERMINATED, 0, &error_code, &error_offset, NULL);
   if (re == NULL) {
     PCRE2_UCHAR buffer[256];
     pcre2_get_error_message(error_code, buffer, sizeof(buffer));
-    sd_journal_send("MESSAGE=%s",
-                    "PCRE2 compilation failed at offset %d: %s",
-                    (int) error_offset,
-                    buffer,
-                    "PRIORITY=%i",
-                    LOG_ERR, NULL);
+    sd_journal_send("MESSAGE=PCRE2 compilation failed at offset %d: %s", (int) error_offset, buffer, "PRIORITY=%i", LOG_ERR, NULL);
     return;
   }
   pcre2_match_data *match_data;
   match_data = pcre2_match_data_create_from_pattern(re, NULL);
-  matches = pcre2_match(re,
-                        (PCRE2_SPTR) source,
-                        strlen(source),
-                        0,
-                        0,
-                        match_data,
-                        NULL);
+  matches = pcre2_match(re, (PCRE2_SPTR) source, strlen(source), 0, 0, match_data, NULL);
   if (matches < 0) {
     switch(matches) {
       case PCRE2_ERROR_NOMATCH:
-        sd_journal_send("MESSAGE=%s",
-                        "PCRE2 no matches",
-                        "PRIORITY=%i",
-                        LOG_ERR,
-                        NULL);
+        sd_journal_send("MESSAGE=%s", "PCRE2 no matches", "PRIORITY=%i", LOG_ERR, NULL);
         break;
       default:
-        sd_journal_send("MESSAGE=%s",
-                        "PCRE2 matching error %d",
-                        matches,
-                        "PRIORITY=%i",
-                        LOG_ERR,
-                        NULL);
+        sd_journal_send("MESSAGE=PCRE2 matching error %d", matches, "PRIORITY=%i", LOG_ERR, NULL);
         break;
     }
     pcre2_match_data_free(match_data);
     pcre2_code_free(re);
     return;
   }
-
   PCRE2_SIZE *ovector = pcre2_get_ovector_pointer(match_data);
   PCRE2_SPTR substring_datetime = (PCRE2_SPTR) source + ovector[2];
   strncpy(datetime, (char *) substring_datetime, ovector[3] - ovector[2]);
@@ -80,10 +49,14 @@ static void capture_pattern(const char *source,
   PCRE2_SPTR substring_location = (PCRE2_SPTR) source + ovector[6];
   strncpy(location, (char *) substring_location, ovector[7] - ovector[6]);
   location[ovector[7] - ovector[6]] = '\0';
-
   pcre2_code_free(re);
   pcre2_match_data_free(match_data);
   return;
+}
+
+static void send_sms(const char *text) {
+  // TODO: send actual SMS
+  printf("%s\n",text);
 }
 
 // Saves the subset of the new string to `holder` starting from the index
@@ -111,13 +84,7 @@ static int prepare_message(redisContext *context) {
   redisReply *status_queue = NULL;
   status_queue = redisCommand(context, "LRANGE messages 0 -1");
   if (status_queue == NULL) {
-    sd_journal_send(
-      "MESSAGE=%s",
-      "Failed to get status queue while attempting to send message.",
-      "PRIORITY=%i",
-      LOG_ERR,
-      NULL
-    );
+    sd_journal_send("MESSAGE=%s", "Failed to get status queue while attempting to send message.", "PRIORITY=%i", LOG_ERR, NULL);
     output = 1;
   } else {
     if (status_queue->type == REDIS_REPLY_ARRAY) {
@@ -140,22 +107,13 @@ static int prepare_message(redisContext *context) {
       memset(messages, 0, buffer_size * sizeof(char));
       strcpy(messages, status_queue->element[0]->str);
       strcat(messages, "\n");
-      capture_pattern(status_queue->element[0]->str,
-                      captured_datetime,
-                      captured_equipment_status,
-                      captured_location);
+      capture_pattern(status_queue->element[0]->str, captured_datetime, captured_equipment_status, captured_location);
       for (counter = 1; counter < status_queue->elements; counter++) {
-        capture_pattern(status_queue->element[counter]->str,
-                        new_captured_datetime,
-                        new_captured_equipment_status,
-                        new_captured_location);
-        str_difference(captured_datetime,
-                       new_captured_datetime,
-                       datetime_substr);
+        capture_pattern(status_queue->element[counter]->str, new_captured_datetime, new_captured_equipment_status, new_captured_location);
+        str_difference(captured_datetime, new_captured_datetime, datetime_substr);
         strcat(messages, datetime_substr);
         strcat(messages, " ");
-        if (strcmp(captured_equipment_status,
-                   new_captured_equipment_status) != 0) {
+        if (strcmp(captured_equipment_status, new_captured_equipment_status) != 0) {
           strcat(messages, new_captured_equipment_status);
           strcat(messages, " ");
         }
@@ -164,16 +122,12 @@ static int prepare_message(redisContext *context) {
         strcpy(captured_datetime, new_captured_datetime);
         strcpy(captured_equipment_status, new_captured_equipment_status);
       }
-      printf("All messages:\n");
-      printf("%s\n", messages);
+      send_sms("All messages:");
+      send_sms(messages);
       free(messages);
       delete_messages = redisCommand(context, "DEL messages");
       if (delete_messages == NULL) {
-        sd_journal_send("MESSAGE=%s",
-                        "Failed to delete messages.",
-                        "PRIORITY=%i",
-                        LOG_ERR,
-                        NULL);
+        sd_journal_send("MESSAGE=%s", "Failed to delete messages.", "PRIORITY=%i", LOG_ERR, NULL);
         output = 3;
       } else {
         freeReplyObject(delete_messages);
@@ -214,18 +168,10 @@ int main(int argc, char **argv) {
     context = redisConnect("localhost", 6379);
     if (context == NULL || context->err) {
       if (context) {
-        sd_journal_send("MESSAGE=Connection error: %s",
-                        context->errstr,
-                        "PRIORITY=%i",
-                        LOG_ERR,
-                        NULL);
+        sd_journal_send("MESSAGE=Connection error: %s", context->errstr, "PRIORITY=%i", LOG_ERR, NULL);
         redisFree(context);
       } else {
-        sd_journal_send("MESSAGE=%s",
-                        "Connection error: can't allocate redis context",
-                        "PRIORITY=%i",
-                        LOG_ERR,
-                        NULL);
+        sd_journal_send("MESSAGE=%s", "Connection error: can't allocate redis context", "PRIORITY=%i", LOG_ERR, NULL);
       }
     } else {
       connected = 1;
@@ -242,56 +188,37 @@ int main(int argc, char **argv) {
     sleep(1);
     time(&current_time);
     equipment_status = redisCommand(context, "GET equipment_status");
-    previous_equipment_status = redisCommand(context,
-                                             "GET previous_equipment_status");
+    previous_equipment_status = redisCommand(context, "GET previous_equipment_status");
     refresh_status = redisCommand(context, "GET status_refresh");
     status_queue = redisCommand(context, "LRANGE messages 0 -1");
-    if (equipment_status == NULL ||
-        previous_equipment_status == NULL ||
-        refresh_status == NULL ||
-        status_queue == NULL) {
-      sd_journal_send("MESSAGE=%s",
-                      "Failed to get redis response.",
-                      "PRIORITY=%i",
-                      LOG_ERR,
-                      NULL);
+    if (equipment_status == NULL || previous_equipment_status == NULL || refresh_status == NULL || status_queue == NULL) {
+      sd_journal_send("MESSAGE=%s", "Failed to get redis response.", "PRIORITY=%i", LOG_ERR, NULL);
       continue;
     }
 
+    // TODO: when the new operator is different from the previous, update
+    // TODO: when the new supervisor is different from the previous, update
+
     // Send SMS when the message queue limit is reached.
-    if (status_queue->type == REDIS_REPLY_ARRAY &&
-        status_queue->elements >= message_limit) {
+    if (status_queue->type == REDIS_REPLY_ARRAY && status_queue->elements >= message_limit) {
       prepare_message(context);
     }
 
     if (equipment_status->type == REDIS_REPLY_STRING) {
-      if (refresh_status->type == REDIS_REPLY_STRING &&
-          strcmp(refresh_status->str, "1") == 0) {
-        if (previous_equipment_status->type == REDIS_REPLY_STRING &&
-            strcmp(previous_equipment_status->str,
-                   equipment_status->str) == 0) {
+      if (refresh_status->type == REDIS_REPLY_STRING && strcmp(refresh_status->str, "1") == 0) {
+        if (previous_equipment_status->type == REDIS_REPLY_STRING && strcmp(previous_equipment_status->str, equipment_status->str) == 0) {
           if ((refresh_time + seconds_refresh_cutoff) <= current_time) {
             set_command = redisCommand(context, "SET status_refresh 0");
             if (set_command == NULL) {
-              sd_journal_send("MESSAGE=%s",
-                              "Failed to set status_refresh.",
-                              "PRIORITY=%i",
-                              LOG_ERR,
-                              NULL);
+              sd_journal_send("MESSAGE=%s", "Failed to set status_refresh.", "PRIORITY=%i", LOG_ERR, NULL);
               continue;
             } else {
               freeReplyObject(set_command);
             }
             // TODO: GNSS query
             time_print = localtime(&current_time);
-            strftime(time_buffer,
-                     sizeof(time_buffer),
-                     "%Y-%m-%d-%H:%M:%S",
-                     time_print);
-            buffer_size = strlen(time_buffer)
-              + strlen(equipment_status->str)
-              + strlen(location)
-              + 3;
+            strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print);
+            buffer_size = strlen(time_buffer) + strlen(equipment_status->str) + strlen(location) + 3;
             message = (char *) malloc(buffer_size * sizeof(char));
             memset(message, 0, buffer_size * sizeof(char));
             strcpy(message, time_buffer);
@@ -301,13 +228,7 @@ int main(int argc, char **argv) {
             strcat(message, location);
             set_command = redisCommand(context, "RPUSH messages %s", message);
             if (set_command == NULL) {
-              sd_journal_send(
-                "MESSAGE=%s",
-                "Failed to get redis response while pushing update.",
-                "PRIORITY=%i",
-                LOG_ERR,
-                NULL
-              );
+              sd_journal_send("MESSAGE=%s", "Failed to get redis response while pushing update.", "PRIORITY=%i", LOG_ERR, NULL);
               continue;
             } else {
               freeReplyObject(set_command);
@@ -316,15 +237,9 @@ int main(int argc, char **argv) {
             refresh_time = current_time;
           }
         } else {
-          set_command = redisCommand(context,
-                                     "SET previous_equipment_status %s",
-                                     equipment_status->str);
+          set_command = redisCommand(context, "SET previous_equipment_status %s", equipment_status->str);
           if (set_command == NULL) {
-            sd_journal_send("MESSAGE=%s",
-                            "Failed to set previous_equipment_status.",
-                            "PRIORITY=%i",
-                            LOG_ERR,
-                            NULL);
+            sd_journal_send("MESSAGE=%s", "Failed to set previous_equipment_status.", "PRIORITY=%i", LOG_ERR,NULL);
             continue;
           } else {
             freeReplyObject(set_command);
@@ -335,14 +250,8 @@ int main(int argc, char **argv) {
         if ((refresh_time + seconds_location_period) <= current_time) {
           // TODO: GNSS query
           time_print = localtime(&current_time);
-          strftime(time_buffer,
-                   sizeof(time_buffer),
-                   "%Y-%m-%d-%H:%M:%S",
-                   time_print);
-          buffer_size = strlen(time_buffer)
-            + strlen(equipment_status->str)
-            + strlen(location)
-            + 3;
+          strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print);
+          buffer_size = strlen(time_buffer) + strlen(equipment_status->str) + strlen(location) + 3;
           message = (char *) malloc(buffer_size * sizeof(char));
           memset(message, 0, buffer_size * sizeof(char));
           strcpy(message, time_buffer);
@@ -352,13 +261,7 @@ int main(int argc, char **argv) {
           strcat(message, location);
           set_command = redisCommand(context, "RPUSH messages %s", message);
           if (set_command == NULL) {
-            sd_journal_send(
-              "MESSAGE=%s",
-              "Failed to get redis response while pushing location update.",
-              "PRIORITY=%i",
-              LOG_ERR,
-              NULL
-            );
+            sd_journal_send("MESSAGE=%s", "Failed to get redis response while pushing location update.", "PRIORITY=%i", LOG_ERR, NULL);
             continue;
           } else {
             freeReplyObject(set_command);
@@ -368,7 +271,6 @@ int main(int argc, char **argv) {
         }
       }
     }
-
     freeReplyObject(equipment_status);
     freeReplyObject(previous_equipment_status);
     freeReplyObject(refresh_status);
