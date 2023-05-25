@@ -9,14 +9,14 @@ cmd = run_command('bash', '-c', 'echo $HOME', check: false)
 home_dir = cmd.stdout().strip()
 
 executable(
-  'background',
-  'background.c',
+  'safersender',
+  'sender.c',
   dependencies : [hiredis_dep, pcre_dep, systemd_dep],
   install: true,
   install_dir: home_dir / 'bin'
 )
 executable(
-  'gui',
+  'safergui',
   'gui.c',
   dependencies : [gtk_dep, hiredis_dep, systemd_dep],
   install: true,

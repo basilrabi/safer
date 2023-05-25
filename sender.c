@@ -1,3 +1,6 @@
+/* Daemon for sending messages to the server
+ */
+
 #define PCRE2_CODE_UNIT_WIDTH 8
 
 #include <hiredis/hiredis.h>
@@ -183,8 +186,7 @@ static int prepare_message(redisContext *context) {
   return output;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   // Number of messages to be queued before sending
   const int message_limit = 10;
   // Number of seconds before the new equipment status is recorded to allow making mistakes
@@ -372,5 +374,6 @@ int main(int argc, char **argv)
     freeReplyObject(refresh_status);
     freeReplyObject(status_queue);
   }
+  redisFree(context);
   return 0;
 }

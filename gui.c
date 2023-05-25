@@ -2,10 +2,48 @@
 #include <hiredis/hiredis.h>
 #include <systemd/sd-journal.h>
 
-static void toggle_status(GtkWidget *button, gpointer data)
-{
-  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON (button)))
-  {
+static void populate_comboboxtext(GtkComboBoxText *box, const char *list) {
+  redisContext *context = redisConnect("localhost", 6379);
+  if (context == NULL || context->err) {
+    if (context) {
+      sd_journal_send("MESSAGE=Connection error: %s",
+                      context->errstr,
+                      "PRIORITY=%i",
+                      LOG_ERR,
+                      NULL);
+      redisFree(context);
+    } else {
+      sd_journal_send("MESSAGE=%s",
+                      "Connection error: can't allocate redis context",
+                      "PRIORITY=%i",
+                      LOG_ERR,
+                      NULL);
+    }
+  }
+  redisReply *personnel_list = redisCommand(context, "LRANGE %s 0 -1", list);
+  if (personnel_list == NULL) {
+    sd_journal_send(
+      "MESSAGE=%s %s.",
+      "Failed to get list of",
+      list,
+      "PRIORITY=%i",
+      LOG_ERR,
+      NULL
+    );
+  } else {
+    if (personnel_list->type == REDIS_REPLY_ARRAY) {
+      for (int counter = 0; counter < personnel_list->elements; counter++) {
+        gtk_combo_box_text_append_text(box,
+                                       personnel_list->element[counter]->str);
+      }
+    }
+    freeReplyObject(personnel_list);
+  }
+  redisFree(context);
+}
+
+static void toggle_status(GtkWidget *button, gpointer data) {
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON (button))) {
     redisReply *previous;
     redisReply *reply;
     redisContext *context = redisConnect("localhost", 6379);
@@ -102,11 +140,11 @@ static void toggle_status(GtkWidget *button, gpointer data)
       }
     }
     freeReplyObject(previous);
+    redisFree(context);
   }
 }
 
-static void activate(GtkApplication* app, gpointer user_data)
-{
+static void activate(GtkApplication *app, gpointer user_data) {
   char *css = (char *) user_data;
   GtkCssProvider *cssProvider;
   GtkWidget *boxActivity = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
@@ -121,13 +159,16 @@ static void activate(GtkApplication* app, gpointer user_data)
   GtkWidget *buttonRefuelling;
   GtkWidget *buttonTravel;
   GtkWidget *buttonWarmup;
-  GtkWidget *comboBoxSupervisor = gtk_combo_box_text_new();
   GtkWidget *comboBoxOperator = gtk_combo_box_text_new();
+  GtkWidget *comboBoxSupervisor = gtk_combo_box_text_new();
   GtkWidget *notebook = gtk_notebook_new();
   GtkWidget *tabLabelActivity = gtk_label_new("Activity");
   GtkWidget *tabLabelPersonnel = gtk_label_new("Personnel");
   GtkWidget *window = gtk_application_window_new(app);
   guint boxPacking = 0;
+
+  populate_comboboxtext(GTK_COMBO_BOX_TEXT(comboBoxOperator), "operators");
+  populate_comboboxtext(GTK_COMBO_BOX_TEXT(comboBoxSupervisor), "supervisors");
 
   gtk_container_add(GTK_CONTAINER(window), notebook);
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook),
@@ -238,8 +279,7 @@ static void activate(GtkApplication* app, gpointer user_data)
   gtk_window_fullscreen (GTK_WINDOW(window));
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   GtkApplication *app;
   char *home_dir = (char *) g_get_home_dir();
   char *css;
