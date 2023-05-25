@@ -26,6 +26,32 @@ static void populate_comboboxtext(GtkComboBoxText *box, const char *list) {
   redisFree(context);
 }
 
+static void toggle_personnel(GtkWidget *box, gpointer data) {
+  redisContext *context = redisConnect("localhost", 6379);
+  redisReply *personnel;
+  if (context == NULL || context->err) {
+    if (context) {
+      sd_journal_send("MESSAGE=Connection error: %s", context->errstr, "PRIORITY=%i", LOG_ERR, NULL);
+      redisFree(context);
+    } else {
+      sd_journal_send("MESSAGE=%s", "Connection error: can't allocate redis context", "PRIORITY=%i", LOG_ERR, NULL);
+    }
+    return;
+  }
+  if (gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(box)) == NULL) {
+    personnel = redisCommand(context, "SET %s NONE", gtk_widget_get_name(box));
+  } else {
+    personnel = redisCommand(context, "SET %s %s", gtk_widget_get_name(box), gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(box)));
+  }
+  if (personnel == NULL) {
+    sd_journal_send("MESSAGE=Failed to set %s.", gtk_widget_get_name(box), "PRIORITY=%i", LOG_ERR, NULL);
+  } else {
+    freeReplyObject(personnel);
+  }
+  redisFree(context);
+  return;
+}
+
 static void toggle_status(GtkWidget *button, gpointer data) {
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON (button))) {
     redisReply *previous;
@@ -144,6 +170,8 @@ static void activate(GtkApplication *app, gpointer user_data) {
   gtk_widget_set_name(buttonRefuelling, "refuel");
   gtk_widget_set_name(buttonTravel, "travel");
   gtk_widget_set_name(buttonWarmup, "warm-up");
+  gtk_widget_set_name(comboBoxOperator, "operator");
+  gtk_widget_set_name(comboBoxSupervisor, "supervisor");
 
   gtk_box_pack_start(GTK_BOX(boxActivity), buttonProduction, TRUE, TRUE, boxPacking);
   gtk_box_pack_start(GTK_BOX(boxActivity), buttonQueu, TRUE, TRUE, boxPacking);
@@ -158,6 +186,8 @@ static void activate(GtkApplication *app, gpointer user_data) {
   g_signal_connect(buttonRefuelling, "clicked", G_CALLBACK(toggle_status), NULL);
   g_signal_connect(buttonTravel, "clicked", G_CALLBACK(toggle_status), NULL);
   g_signal_connect(buttonWarmup, "clicked", G_CALLBACK(toggle_status), NULL);
+  g_signal_connect(comboBoxOperator, "changed", G_CALLBACK(toggle_personnel), NULL);
+  g_signal_connect(comboBoxSupervisor, "changed", G_CALLBACK(toggle_personnel), NULL);
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(buttonWarmup), TRUE);
   gtk_container_set_border_width (GTK_CONTAINER(boxActivity), 5);
