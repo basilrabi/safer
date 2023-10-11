@@ -2,7 +2,7 @@
 
 ## Build Requirements
 
-### Fedora 38
+### Fedora 39
 
 1. gtk3-devel
 1. hiredis-devel
@@ -12,11 +12,14 @@
 
 ## Installing
 
+### Building
 ```
 meson setup builddir
 cd builddir
 meson install
 ```
+
+### Running
 
 The program can be run using the command `gui`.
 
