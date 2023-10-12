@@ -16,9 +16,12 @@ executable(
     'gui.h',
     'gui_functions.c',
     'gui_functions.h',
-    'utils.h'
+    'utils.h',
+    'utils.c',
+    'worker.h',
+    'worker.c'
   ],
-  dependencies : [gtk_dep, hiredis_dep, systemd_dep],
+  dependencies : [gtk_dep, hiredis_dep, pcre_dep, systemd_dep],
   install: true,
   install_dir: home_dir / 'bin'
 )

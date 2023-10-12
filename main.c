@@ -1,15 +1,24 @@
 #include <gtk/gtk.h>
-#include <hiredis/hiredis.h>
 #include <systemd/sd-journal.h>
 #include "gui.h"
 #include "utils.h"
 
+/**
+ * main:
+ *
+ * Main function
+ *
+ * Returns: exit status of application
+ *          -1 if failed to initialize redisContext
+ *          -2 if failed to set shutdown key in redis
+ */
 int main(int argc, char **argv) {
   GtkApplication *app;
   char *home_dir = (char *) g_get_home_dir();
   char *css;
   int buffer_size;
   int status;
+  redisReply *shutdown = NULL;
 
   buffer_size = strlen(home_dir) + 11;
   css = (char *) malloc(buffer_size * sizeof(char));
@@ -27,9 +36,18 @@ int main(int argc, char **argv) {
     }
       return -1;
   }
+  shutdown = redisCommand(context, "SET shutdown 0");
+  if (shutdown == NULL) {
+    sd_journal_send("MESSAGE=%s", "Failed to set shutdown to 0.", "PRIORITY=%i", LOG_ERR, NULL);
+    return -2;
+  } else {
+    freeReplyObject(shutdown);
+  }
+
   struct pset pointer_set;
   pointer_set.context = context;
   pointer_set.css = css;
+  set_system_time();
   g_signal_connect(app, "activate", G_CALLBACK(activate), &pointer_set);
   status = g_application_run(G_APPLICATION(app), argc, argv);
   g_object_unref(app);

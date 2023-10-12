@@ -1,6 +1,7 @@
 #include "gui.h"
 #include "gui_functions.h"
 #include "utils.h"
+#include "worker.h"
 
 void activate(GtkApplication *app, gpointer data) {
   struct pset *pointer_set = (struct pset *) data;
@@ -24,6 +25,8 @@ void activate(GtkApplication *app, gpointer data) {
   GtkWidget *tabLabelPersonnel = gtk_label_new("Personnel");
   GtkWidget *window = gtk_application_window_new(app);
   guint boxPacking = 0;
+
+  g_thread_new("StatusSenderThread", (GThreadFunc)status_sender, pointer_set->context);
 
   populate_comboboxtext(GTK_COMBO_BOX_TEXT(comboBoxOperator), "operators", pointer_set->context);
   populate_comboboxtext(GTK_COMBO_BOX_TEXT(comboBoxSupervisor), "supervisors", pointer_set->context);
