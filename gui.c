@@ -3,7 +3,8 @@
 #include "utils.h"
 #include "worker.h"
 
-void activate(GtkApplication *app, gpointer data) {
+void activate(GtkApplication *app, gpointer data)
+{
   struct pset *pointer_set = (struct pset *) data;
   GtkCssProvider *cssProvider;
   GtkWidget *boxActivity = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);

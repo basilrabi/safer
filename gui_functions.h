@@ -12,7 +12,9 @@
  *
  * Populates the contents of @box.
  **/
-void populate_comboboxtext(GtkComboBoxText *box, const char *list, redisContext *context);
+void populate_comboboxtext(GtkComboBoxText *box,
+                           const char      *list,
+                           redisContext    *context);
 
 /**
  * toggle_personnel:
@@ -23,7 +25,8 @@ void populate_comboboxtext(GtkComboBoxText *box, const char *list, redisContext 
  * @box.
  * TODO: if the shutdown status is true, do not queue information to redis
  **/
-void toggle_personnel(GtkWidget *box, gpointer data);
+void toggle_personnel(GtkWidget *box,
+                      gpointer   data);
 
 /**
  * toggle_status:
@@ -34,7 +37,8 @@ void toggle_personnel(GtkWidget *box, gpointer data);
  * @button.
  * TODO: if the shutdown status is true, do not queue information to redis
  */
-void toggle_status(GtkWidget *button, gpointer data);
+void toggle_status(GtkWidget *button,
+                   gpointer   data);
 
 #endif // GUI_FUNCTIONS_H
 

@@ -10,6 +10,7 @@
  *
  * Activates @app with all the UI components.
  */
-void activate(GtkApplication *app, gpointer data);
+void activate(GtkApplication *app,
+              gpointer        data);
 
 #endif // GUI_H

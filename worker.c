@@ -4,7 +4,10 @@
 #include "worker.h"
 #include "utils.h"
 
-void status_sender(gpointer data) {
+void status_sender(gpointer data)
+{
+  redisContext *context = (redisContext *) data;
+
   // Number of messages to be queued before sending
   const int message_limit = 10;
   // Number of seconds before the new equipment status is recorded to allow making mistakes
@@ -18,8 +21,8 @@ void status_sender(gpointer data) {
   char *last_message;
   char *last_status = "off";
   int buffer_size;
+  int redis_cmd = 0;
   int shutdown = 0;
-  redisContext *context = (redisContext *) data;
   redisReply *equipment_status = NULL;
   redisReply *previous_equipment_status = NULL;
   redisReply *refresh_status = NULL;
@@ -83,12 +86,9 @@ void status_sender(gpointer data) {
       if (refresh_status->type == REDIS_REPLY_STRING && strcmp(refresh_status->str, "1") == 0) {
         if (previous_equipment_status->type == REDIS_REPLY_STRING && strcmp(previous_equipment_status->str, equipment_status->str) == 0) {
           if ((refresh_time + seconds_refresh_cutoff) <= current_time) {
-            set_command = redisCommand(context, "SET status_refresh 0");
-            if (set_command == NULL) {
-              sd_journal_send("MESSAGE=%s", "Failed to set status_refresh.", "PRIORITY=%i", LOG_ERR, NULL);
+            redis_cmd = push_redis_cmd(context, "SET status_refresh 0");
+            if (!redis_cmd) {
               continue;
-            } else {
-              freeReplyObject(set_command);
             }
             time_print = localtime(&current_time);
             strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print);
@@ -111,12 +111,9 @@ void status_sender(gpointer data) {
             refresh_time = current_time;
           }
         } else {
-          set_command = redisCommand(context, "SET previous_equipment_status %s", equipment_status->str);
-          if (set_command == NULL) {
-            sd_journal_send("MESSAGE=%s", "Failed to set previous_equipment_status.", "PRIORITY=%i", LOG_ERR, NULL);
+          redis_cmd = push_redis_cmd(context, "SET previous_equipment_status %s", equipment_status->str);
+          if (!redis_cmd) {
             continue;
-          } else {
-            freeReplyObject(set_command);
           }
           refresh_time = current_time;
         }

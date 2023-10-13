@@ -18,7 +18,6 @@ int main(int argc, char **argv) {
   char *css;
   int buffer_size;
   int status;
-  redisReply *shutdown = NULL;
 
   buffer_size = strlen(home_dir) + 11;
   css = (char *) malloc(buffer_size * sizeof(char));
@@ -36,12 +35,8 @@ int main(int argc, char **argv) {
     }
       return -1;
   }
-  shutdown = redisCommand(context, "SET shutdown 0");
-  if (shutdown == NULL) {
-    sd_journal_send("MESSAGE=%s", "Failed to set shutdown to 0.", "PRIORITY=%i", LOG_ERR, NULL);
+  if (!push_redis_cmd(context, "SET shutdown 0")) {
     return -2;
-  } else {
-    freeReplyObject(shutdown);
   }
 
   struct pset pointer_set;

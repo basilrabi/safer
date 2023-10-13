@@ -4,9 +4,33 @@
 #include <systemd/sd-journal.h>
 #include "utils.h"
 
+int push_redis_cmd(redisContext *context,
+                   const char   *format,
+                   ...) {
+    va_list args;
+    va_start(args, format);
+
+    // Determine the length of the formatted string
+    int len = vsnprintf(NULL, 0, format, args) + 1;
+    va_end(args);
+
+    char *cmd = malloc(len);
+    va_start(args, format);
+    vsnprintf(cmd, len, format, args);
+    va_end(args);
+    redisReply *reply = redisCommand(context, cmd);
+    if (reply == NULL) {
+        sd_journal_send("MESSAGE=Error executing Redis command: %s", cmd, "PRIORITY=%i", LOG_ERR, NULL);
+        free(cmd);
+        return 0;
+    }
+    freeReplyObject(reply);
+    free(cmd);
+    return 1;
+}
+
 int send_equipment_status(redisContext *context) {
   int output = 0;
-  redisReply *delete_messages = NULL;
   redisReply *status_queue = NULL;
   status_queue = redisCommand(context, "LRANGE messages 0 -1");
   if (status_queue == NULL) {
@@ -51,12 +75,9 @@ int send_equipment_status(redisContext *context) {
       send_sms("All messages:");
       send_sms(messages);
       free(messages);
-      delete_messages = redisCommand(context, "DEL messages");
-      if (delete_messages == NULL) {
-        sd_journal_send("MESSAGE=%s", "Failed to delete messages.", "PRIORITY=%i", LOG_ERR, NULL);
+
+      if (!push_redis_cmd(context, "DEL messages")) {
         output = 3;
-      } else {
-        freeReplyObject(delete_messages);
       }
     } else {
       output = 2;
@@ -66,7 +87,10 @@ int send_equipment_status(redisContext *context) {
   return output;
 }
 
-void capture_pattern(const char *source, char *datetime, char *status, char *location) {
+void capture_pattern(const char *source,
+                     char       *datetime,
+                     char       *status,
+                     char       *location) {
   const PCRE2_SPTR pattern = (PCRE2_SPTR) "^(\\d{4}-\\d{2}-\\d{2}-\\d{2}:\\d{2}:\\d{2})\\s+([a-z\\-]+)\\s+(LOCATION).*";
   int error_code;
   int matches;
@@ -120,7 +144,9 @@ void set_system_time(void) {
   printf("System time set.\n");
 }
 
-void str_difference(const char *old, const char *new, char *holder) {
+void str_difference(const char *old,
+                    const char *new,
+                    char       *holder) {
   int counter = 0;
   int idx;
   holder[0] = '\0';

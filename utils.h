@@ -9,6 +9,19 @@ struct pset {
 };
 
 /**
+ * push_redis_cmd:
+ * @context: redisContext to be used
+ * @format: a string format which will be used as redis command
+ *
+ * Runs a redis command.
+ *
+ * Returns: 0 if fail, 1 if success.
+ */
+int push_redis_cmd(redisContext *context,
+                   const char   *format,
+                   ...);
+
+/**
  * send_equipment_status:
  * @context: redisContext to be used for connection
  *
@@ -31,7 +44,10 @@ int send_equipment_status(redisContext *context);
  * Extracts the datetime, equipment status, and equipment location regex
  * patterns.
  */
-void capture_pattern(const char *source, char *datetime, char *status, char *location);
+void capture_pattern(const char *source,
+                     char       *datetime,
+                     char       *status,
+                     char       *location);
 
 /**
  * send_sms:
@@ -59,7 +75,9 @@ void set_system_time(void);
  * @new is different from @old up to the last index of @new, that substring will
  * be stored to @holder.
  */
-void str_difference(const char *old_string, const char *new_string, char *holder);
+void str_difference(const char *old_string,
+                    const char *new_string,
+                    char       *holder);
 
 #endif // UTILS_H
 
