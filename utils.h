@@ -9,6 +9,18 @@ struct pset {
 };
 
 /**
+ * push_message:
+ * @context: redisContext to be used
+ * @message: the message to be pushed
+ *
+ * Pushes @message to the messages list in redis.
+ *
+ * Returns: 0 if fail, 1 if success.
+ */
+int push_message(redisContext *context,
+                 const char   *message);
+
+/**
  * push_redis_cmd:
  * @context: redisContext to be used
  * @format: a string format which will be used as redis command

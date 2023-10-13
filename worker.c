@@ -21,12 +21,12 @@ void status_sender(gpointer data)
   char *last_message;
   char *last_status = "off";
   int buffer_size;
+  int push_message_status = 0;
   int redis_cmd = 0;
   int shutdown = 0;
   redisReply *equipment_status = NULL;
   redisReply *previous_equipment_status = NULL;
   redisReply *refresh_status = NULL;
-  redisReply *set_command = NULL;
   redisReply *shutdown_status = NULL;
   redisReply *status_queue = NULL;
   struct tm *time_print;
@@ -63,13 +63,10 @@ void status_sender(gpointer data)
       strcat(last_message, last_status);
       strcat(last_message, " ");
       strcat(last_message, location);
-      set_command = redisCommand(context, "RPUSH messages %s", last_message);
+      push_message_status = push_message(context, last_message);
       free(last_message);
-      if (set_command == NULL) {
-        sd_journal_send("MESSAGE=%s", "Failed to get redis response while pushing update.", "PRIORITY=%i", LOG_ERR, NULL);
+      if (!push_message_status) {
         continue;
-      } else {
-        freeReplyObject(set_command);
       }
     }
 
@@ -100,12 +97,9 @@ void status_sender(gpointer data)
             strcat(message, equipment_status->str);
             strcat(message, " ");
             strcat(message, location);
-            set_command = redisCommand(context, "RPUSH messages %s", message);
-            if (set_command == NULL) {
-              sd_journal_send("MESSAGE=%s", "Failed to get redis response while pushing update.", "PRIORITY=%i", LOG_ERR, NULL);
+            push_message_status = push_message(context, message);
+            if (!push_message_status) {
               continue;
-            } else {
-              freeReplyObject(set_command);
             }
             free(message);
             refresh_time = current_time;
@@ -130,12 +124,9 @@ void status_sender(gpointer data)
           strcat(message, equipment_status->str);
           strcat(message, " ");
           strcat(message, location);
-          set_command = redisCommand(context, "RPUSH messages %s", message);
-          if (set_command == NULL) {
-            sd_journal_send("MESSAGE=%s", "Failed to get redis response while pushing location update.", "PRIORITY=%i", LOG_ERR, NULL);
+          push_message_status = push_message(context, message);
+          if (!push_message_status) {
             continue;
-          } else {
-            freeReplyObject(set_command);
           }
           free(message);
           refresh_time = current_time;

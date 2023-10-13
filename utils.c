@@ -4,6 +4,18 @@
 #include <systemd/sd-journal.h>
 #include "utils.h"
 
+int push_message(redisContext *context,
+                 const char   *message)
+{
+  redisReply *reply = redisCommand(context, "RPUSH messages %s", message);
+  if (reply == NULL) {
+    sd_journal_send("MESSAGE=Error pushing message: %s", message, "PRIORITY=%i", LOG_ERR, NULL);
+    return 0;
+  }
+  freeReplyObject(reply);
+  return 1;
+}
+
 int push_redis_cmd(redisContext *context,
                    const char   *format,
                    ...) {
