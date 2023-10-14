@@ -34,9 +34,9 @@ int push_message(redisContext *context,
   return 1;
 }
 
-int push_redis_cmd(redisContext *context,
-                   const char   *format,
-                   ...) {
+int redis_cmd(redisContext *context,
+              const char   *format,
+              ...) {
     va_list args;
     va_start(args, format);
 
@@ -103,10 +103,12 @@ int send_equipment_status(redisContext *context) {
         strcpy(captured_equipment_status, new_captured_equipment_status);
       }
       send_sms("All messages:");
+      // TODO: return the status of sending messages and delete cache if sending
+      // is success.
       send_sms(messages);
       free(messages);
 
-      if (!push_redis_cmd(context, "DEL messages")) {
+      if (!redis_cmd(context, "DEL messages")) {
         output = 3;
       }
     } else {

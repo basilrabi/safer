@@ -23,7 +23,7 @@
  * again, the time difference will be analyzed to check if the real-time clock
  * is still functioning properly.
  */
-void shutdown(gpointer data);
+void shutdown_watcher(gpointer data);
 
 /**
  * sms_receiver:

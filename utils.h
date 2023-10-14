@@ -41,9 +41,9 @@ int push_message(redisContext *context,
  *
  * Returns: 0 if fail, 1 if success.
  */
-int push_redis_cmd(redisContext *context,
-                   const char   *format,
-                   ...);
+int redis_cmd(redisContext *context,
+              const char   *format,
+              ...);
 
 /**
  * send_equipment_status:

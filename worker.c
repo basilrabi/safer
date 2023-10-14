@@ -18,15 +18,13 @@ void status_sender(gpointer data)
   char time_buffer[20];
   char *location = "LOCATION"; // Temporary placeholder for GNSS query
   char *message;
-  char *last_message;
   char *last_status = "off";
   int buffer_size;
   int push_message_status = 0;
-  int redis_cmd = 0;
+  int refresh_status = 0;
   int shutdown = 0;
   redisReply *equipment_status = NULL;
   redisReply *previous_equipment_status = NULL;
-  redisReply *refresh_status = NULL;
   redisReply *status_queue = NULL;
   struct tm *time_print;
   time_t current_time;
@@ -38,29 +36,28 @@ void status_sender(gpointer data)
     time(&current_time);
     equipment_status = redisCommand(context, "GET equipment_status");
     previous_equipment_status = redisCommand(context, "GET previous_equipment_status");
-    refresh_status = redisCommand(context, "GET status_refresh");
     status_queue = redisCommand(context, "LRANGE messages 0 -1");
     if (equipment_status == NULL ||
         previous_equipment_status == NULL ||
-        refresh_status == NULL ||
         status_queue == NULL) {
       sd_journal_send("MESSAGE=%s", "Failed to get redis response.", "PRIORITY=%i", LOG_ERR, NULL);
       continue;
     }
+    get_int_key(context, "status_refresh", &refresh_status);
     get_int_key(context, "shutdown", &shutdown);
     if (shutdown) {
       time_print = localtime(&current_time);
       strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print);
       buffer_size = strlen(time_buffer) + strlen(last_status) + strlen(location) + 3;
-      last_message = (char *) malloc(buffer_size * sizeof(char));
-      memset(last_message, 0, buffer_size * sizeof(char));
-      strcpy(last_message, time_buffer);
-      strcat(last_message, " ");
-      strcat(last_message, last_status);
-      strcat(last_message, " ");
-      strcat(last_message, location);
-      push_message_status = push_message(context, last_message);
-      free(last_message);
+      message = (char *) malloc(buffer_size * sizeof(char));
+      memset(message, 0, buffer_size * sizeof(char));
+      strcpy(message, time_buffer);
+      strcat(message, " ");
+      strcat(message, last_status);
+      strcat(message, " ");
+      strcat(message, location);
+      push_message_status = push_message(context, message);
+      free(message);
       if (!push_message_status) {
         continue;
       }
@@ -76,11 +73,10 @@ void status_sender(gpointer data)
     }
 
     if (equipment_status->type == REDIS_REPLY_STRING && !shutdown) {
-      if (refresh_status->type == REDIS_REPLY_STRING && strcmp(refresh_status->str, "1") == 0) {
+      if (refresh_status) {
         if (previous_equipment_status->type == REDIS_REPLY_STRING && strcmp(previous_equipment_status->str, equipment_status->str) == 0) {
           if ((refresh_time + seconds_refresh_cutoff) <= current_time) {
-            redis_cmd = push_redis_cmd(context, "SET status_refresh 0");
-            if (!redis_cmd) {
+            if (!redis_cmd(context, "SET status_refresh 0")) {
               continue;
             }
             time_print = localtime(&current_time);
@@ -94,15 +90,14 @@ void status_sender(gpointer data)
             strcat(message, " ");
             strcat(message, location);
             push_message_status = push_message(context, message);
+            free(message);
             if (!push_message_status) {
               continue;
             }
-            free(message);
             refresh_time = current_time;
           }
         } else {
-          redis_cmd = push_redis_cmd(context, "SET previous_equipment_status %s", equipment_status->str);
-          if (!redis_cmd) {
+          if (!redis_cmd(context, "SET previous_equipment_status %s", equipment_status->str)) {
             continue;
           }
           refresh_time = current_time;
@@ -121,17 +116,16 @@ void status_sender(gpointer data)
           strcat(message, " ");
           strcat(message, location);
           push_message_status = push_message(context, message);
+          free(message);
           if (!push_message_status) {
             continue;
           }
-          free(message);
           refresh_time = current_time;
         }
       }
     }
     freeReplyObject(equipment_status);
     freeReplyObject(previous_equipment_status);
-    freeReplyObject(refresh_status);
     freeReplyObject(status_queue);
 
     if (shutdown) {
