@@ -23,6 +23,11 @@ void toggle_personnel(GtkWidget *box,
                       gpointer   data)
 {
   redisContext *context = (redisContext *) data;
+  int shutdown = 0;
+  get_int_key(context, "shutdown", &shutdown);
+  if (shutdown) {
+    return;
+  }
   if (gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(box)) == NULL) {
     push_redis_cmd(context, "SET %s NONE", gtk_widget_get_name(box));
   } else {
@@ -34,8 +39,13 @@ void toggle_personnel(GtkWidget *box,
 void toggle_status(GtkWidget *button,
                    gpointer   data)
 {
+  redisContext *context = (redisContext *) data;
+  int shutdown = 0;
+  get_int_key(context, "shutdown", &shutdown);
+  if (shutdown) {
+    return;
+  }
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON (button))) {
-    redisContext *context = (redisContext *) data;
     redisReply *previous;
     previous = redisCommand(context, "GET equipment_status");
     if (previous == NULL) {

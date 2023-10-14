@@ -23,7 +23,6 @@ void populate_comboboxtext(GtkComboBoxText *box,
  *
  * Sets the key in redis having the name of @box using the selected content of
  * @box.
- * TODO: if the shutdown status is true, do not queue information to redis
  **/
 void toggle_personnel(GtkWidget *box,
                       gpointer   data);
@@ -35,7 +34,6 @@ void toggle_personnel(GtkWidget *box,
  *
  * Sets the keys previous_equipment_status, equipment_status using the selected
  * @button.
- * TODO: if the shutdown status is true, do not queue information to redis
  */
 void toggle_status(GtkWidget *button,
                    gpointer   data);

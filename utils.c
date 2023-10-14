@@ -4,6 +4,24 @@
 #include <systemd/sd-journal.h>
 #include "utils.h"
 
+int get_int_key(redisContext *context,
+                char         *key,
+                int          *value)
+{
+  int out = 0;
+  redisReply *reply = redisCommand(context, "GET %s", key);
+  if (reply == NULL) {
+    sd_journal_send("MESSAGE=Error getting key: %s", key, "PRIORITY=%i", LOG_ERR, NULL);
+    return out;
+  }
+  if (reply->type == REDIS_REPLY_STRING) {
+    *value = atoi(reply->str);
+    out = 1;
+  }
+  freeReplyObject(reply);
+  return out;
+}
+
 int push_message(redisContext *context,
                  const char   *message)
 {

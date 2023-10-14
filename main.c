@@ -10,7 +10,7 @@
  *
  * Returns: exit status of application
  *          -1 if failed to initialize redisContext
- *          -2 if failed to set shutdown key in redis
+ *          -2 if failed to set pre_shutdown or shutdown key in redis
  */
 int main(int argc, char **argv) {
   GtkApplication *app;
@@ -36,6 +36,9 @@ int main(int argc, char **argv) {
       return -1;
   }
   if (!push_redis_cmd(context, "SET shutdown 0")) {
+    return -2;
+  }
+  if (!push_redis_cmd(context, "SET pre_shutdown 0")) {
     return -2;
   }
 

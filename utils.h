@@ -9,6 +9,18 @@ struct pset {
 };
 
 /**
+ * get_int_key:
+ * @context: redisContext to be used
+ * @key: name of the key in redis where the value will be taken
+ * @value: integer where the value will be stored
+ *
+ * Returns: 0 if fail, 1 if success
+ */
+int get_int_key(redisContext *context,
+                char         *key,
+                int          *value);
+
+/**
  * push_message:
  * @context: redisContext to be used
  * @message: the message to be pushed

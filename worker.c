@@ -27,7 +27,6 @@ void status_sender(gpointer data)
   redisReply *equipment_status = NULL;
   redisReply *previous_equipment_status = NULL;
   redisReply *refresh_status = NULL;
-  redisReply *shutdown_status = NULL;
   redisReply *status_queue = NULL;
   struct tm *time_print;
   time_t current_time;
@@ -40,19 +39,16 @@ void status_sender(gpointer data)
     equipment_status = redisCommand(context, "GET equipment_status");
     previous_equipment_status = redisCommand(context, "GET previous_equipment_status");
     refresh_status = redisCommand(context, "GET status_refresh");
-    shutdown_status = redisCommand(context, "GET shutdown");
     status_queue = redisCommand(context, "LRANGE messages 0 -1");
     if (equipment_status == NULL ||
         previous_equipment_status == NULL ||
         refresh_status == NULL ||
-        shutdown_status == NULL ||
         status_queue == NULL) {
       sd_journal_send("MESSAGE=%s", "Failed to get redis response.", "PRIORITY=%i", LOG_ERR, NULL);
       continue;
     }
-
-    if (shutdown_status->type == REDIS_REPLY_STRING && strcmp(shutdown_status->str, "1") == 0) {
-      shutdown = 1;
+    get_int_key(context, "shutdown", &shutdown);
+    if (shutdown) {
       time_print = localtime(&current_time);
       strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print);
       buffer_size = strlen(time_buffer) + strlen(last_status) + strlen(location) + 3;
@@ -74,12 +70,12 @@ void status_sender(gpointer data)
     // TODO: when the new supervisor is different from the previous, update
     // TODO: GNSS query
 
-    // Send SMS when the message queue limit is reached.
-    if (status_queue->type == REDIS_REPLY_ARRAY && (status_queue->elements >= message_limit || shutdown == 1)) {
+    // Send SMS when the message queue limit is reached or there is shutdown signal.
+    if (status_queue->type == REDIS_REPLY_ARRAY && (status_queue->elements >= message_limit || shutdown)) {
       send_equipment_status(context);
     }
 
-    if (equipment_status->type == REDIS_REPLY_STRING && shutdown == 0) {
+    if (equipment_status->type == REDIS_REPLY_STRING && !shutdown) {
       if (refresh_status->type == REDIS_REPLY_STRING && strcmp(refresh_status->str, "1") == 0) {
         if (previous_equipment_status->type == REDIS_REPLY_STRING && strcmp(previous_equipment_status->str, equipment_status->str) == 0) {
           if ((refresh_time + seconds_refresh_cutoff) <= current_time) {
@@ -136,7 +132,6 @@ void status_sender(gpointer data)
     freeReplyObject(equipment_status);
     freeReplyObject(previous_equipment_status);
     freeReplyObject(refresh_status);
-    freeReplyObject(shutdown_status);
     freeReplyObject(status_queue);
 
     if (shutdown) {
