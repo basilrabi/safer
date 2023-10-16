@@ -74,7 +74,7 @@ void status_sender(gpointer data)
       if (refresh_status) {
         if (previous_equipment_status->type == REDIS_REPLY_STRING && strcmp(previous_equipment_status->str, equipment_status->str) == 0) {
           if ((refresh_time + seconds_refresh_cutoff) <= current_time) {
-            if (!redis_cmd(context, "SET status_refresh 0"))
+            if (!redis_cmd("SET status_refresh 0"))
               continue;
             time_print = localtime(&current_time);
             strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print);
@@ -93,7 +93,7 @@ void status_sender(gpointer data)
             refresh_time = current_time;
           }
         } else {
-          if (!redis_cmd(context, "SET previous_equipment_status %s", equipment_status->str)) {
+          if (!redis_cmd("SET previous_equipment_status %s", equipment_status->str)) {
             continue;
           }
           refresh_time = current_time;

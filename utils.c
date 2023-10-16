@@ -1,5 +1,6 @@
 #define PCRE2_CODE_UNIT_WIDTH 8
 
+#include <glib.h>
 #include <pcre2.h>
 #include <systemd/sd-journal.h>
 #include "utils.h"
@@ -34,10 +35,10 @@ int push_message(redisContext *context,
   return 1;
 }
 
-int redis_cmd(redisContext *context,
-              const char   *format,
+int redis_cmd(const char *format,
               ...)
 {
+  int value = 0;
   va_list args;
   va_start(args, format);
 
@@ -49,15 +50,27 @@ int redis_cmd(redisContext *context,
   va_start(args, format);
   vsnprintf(cmd, len, format, args);
   va_end(args);
+  redisContext *context = redisConnect("localhost", 6379);
+  if (context == NULL || context->err) {
+    if (context) {
+      sd_journal_send("MESSAGE=Connection error: %s", context->errstr, "PRIORITY=%i", LOG_ERR, NULL);
+      redisFree(context);
+    } else
+      sd_journal_send("MESSAGE=%s", "Connection error: can't allocate redis context", "PRIORITY=%i", LOG_ERR, NULL);
+    free(cmd);
+    return value;
+  }
   redisReply *reply = redisCommand(context, cmd);
   if (reply == NULL) {
     sd_journal_send("MESSAGE=Error executing Redis command: %s", cmd, "PRIORITY=%i", LOG_ERR, NULL);
-    free(cmd);
-    return 0;
+  } else {
+    if (reply->type != REDIS_REPLY_ERROR)
+      value = 1;
+    freeReplyObject(reply);
   }
-  freeReplyObject(reply);
   free(cmd);
-  return 1;
+  redisFree(context);
+  return value;
 }
 
 int send_equipment_status(redisContext *context)
@@ -109,7 +122,7 @@ int send_equipment_status(redisContext *context)
       send_sms(messages);
       free(messages);
 
-      if (!redis_cmd(context, "DEL messages"))
+      if (!redis_cmd("DEL messages"))
         output = 3;
     } else {
       output = 2;

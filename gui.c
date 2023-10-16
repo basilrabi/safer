@@ -5,7 +5,7 @@
 
 void activate(GtkApplication *app, gpointer data)
 {
-  struct pset *pointer_set = (struct pset *) data;
+  pset *pointer_set = (pset *) data;
   GtkCssProvider *cssProvider;
   GtkWidget *boxActivity = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   GtkWidget *boxPersonnel = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);

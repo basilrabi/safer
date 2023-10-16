@@ -3,10 +3,10 @@
 
 #include <hiredis/hiredis.h>
 
-struct pset {
+typedef struct pset {
   redisContext *context;
   char *css;
-};
+} pset;
 
 /**
  * get_int_key:
@@ -33,16 +33,14 @@ int push_message(redisContext *context,
                  const char   *message);
 
 /**
- * push_redis_cmd:
- * @context: redisContext to be used
+ * redis_cmd:
  * @format: a string format which will be used as redis command
  *
  * Runs a redis command.
  *
  * Returns: 0 if fail, 1 if success.
  */
-int redis_cmd(redisContext *context,
-              const char   *format,
+int redis_cmd(const char *format,
               ...);
 
 /**
