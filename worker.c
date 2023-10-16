@@ -11,7 +11,7 @@ void status_sender(gpointer data)
   // Number of messages to be queued before sending
   const int message_limit = 10;
   // Number of seconds before the new equipment status is recorded to allow making mistakes
-  const int seconds_refresh_cutoff = 10;
+  const int seconds_refresh_cutoff = 5;
   // Number of seconds between location queries
   const int seconds_location_period = 30;
 
@@ -58,9 +58,8 @@ void status_sender(gpointer data)
       strcat(message, location);
       push_message_status = push_message(context, message);
       free(message);
-      if (!push_message_status) {
+      if (!push_message_status)
         continue;
-      }
     }
 
     // TODO: when the new operator is different from the previous, update
@@ -68,17 +67,15 @@ void status_sender(gpointer data)
     // TODO: GNSS query
 
     // Send SMS when the message queue limit is reached or there is shutdown signal.
-    if (status_queue->type == REDIS_REPLY_ARRAY && (status_queue->elements >= message_limit || shutdown)) {
+    if (status_queue->type == REDIS_REPLY_ARRAY && (status_queue->elements >= message_limit || shutdown))
       send_equipment_status(context);
-    }
 
     if (equipment_status->type == REDIS_REPLY_STRING && !shutdown) {
       if (refresh_status) {
         if (previous_equipment_status->type == REDIS_REPLY_STRING && strcmp(previous_equipment_status->str, equipment_status->str) == 0) {
           if ((refresh_time + seconds_refresh_cutoff) <= current_time) {
-            if (!redis_cmd(context, "SET status_refresh 0")) {
+            if (!redis_cmd(context, "SET status_refresh 0"))
               continue;
-            }
             time_print = localtime(&current_time);
             strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print);
             buffer_size = strlen(time_buffer) + strlen(equipment_status->str) + strlen(location) + 3;
@@ -91,9 +88,8 @@ void status_sender(gpointer data)
             strcat(message, location);
             push_message_status = push_message(context, message);
             free(message);
-            if (!push_message_status) {
+            if (!push_message_status)
               continue;
-            }
             refresh_time = current_time;
           }
         } else {
@@ -117,9 +113,8 @@ void status_sender(gpointer data)
           strcat(message, location);
           push_message_status = push_message(context, message);
           free(message);
-          if (!push_message_status) {
+          if (!push_message_status)
             continue;
-          }
           refresh_time = current_time;
         }
       }
@@ -128,9 +123,8 @@ void status_sender(gpointer data)
     freeReplyObject(previous_equipment_status);
     freeReplyObject(status_queue);
 
-    if (shutdown) {
+    if (shutdown)
       break;
-    }
   }
   return;
 }

@@ -35,12 +35,10 @@ int main(int argc, char **argv) {
     }
       return -1;
   }
-  if (!redis_cmd(context, "SET shutdown 0")) {
+  if (!redis_cmd(context, "SET shutdown 0"))
     return -2;
-  }
-  if (!redis_cmd(context, "SET pre_shutdown 0")) {
+  if (!redis_cmd(context, "SET pre_shutdown 0"))
     return -2;
-  }
 
   struct pset pointer_set;
   pointer_set.context = context;

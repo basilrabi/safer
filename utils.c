@@ -36,30 +36,32 @@ int push_message(redisContext *context,
 
 int redis_cmd(redisContext *context,
               const char   *format,
-              ...) {
-    va_list args;
-    va_start(args, format);
+              ...)
+{
+  va_list args;
+  va_start(args, format);
 
-    // Determine the length of the formatted string
-    int len = vsnprintf(NULL, 0, format, args) + 1;
-    va_end(args);
+  // Determine the length of the formatted string
+  int len = vsnprintf(NULL, 0, format, args) + 1;
+  va_end(args);
 
-    char *cmd = malloc(len);
-    va_start(args, format);
-    vsnprintf(cmd, len, format, args);
-    va_end(args);
-    redisReply *reply = redisCommand(context, cmd);
-    if (reply == NULL) {
-        sd_journal_send("MESSAGE=Error executing Redis command: %s", cmd, "PRIORITY=%i", LOG_ERR, NULL);
-        free(cmd);
-        return 0;
-    }
-    freeReplyObject(reply);
+  char *cmd = malloc(len);
+  va_start(args, format);
+  vsnprintf(cmd, len, format, args);
+  va_end(args);
+  redisReply *reply = redisCommand(context, cmd);
+  if (reply == NULL) {
+    sd_journal_send("MESSAGE=Error executing Redis command: %s", cmd, "PRIORITY=%i", LOG_ERR, NULL);
     free(cmd);
-    return 1;
+    return 0;
+  }
+  freeReplyObject(reply);
+  free(cmd);
+  return 1;
 }
 
-int send_equipment_status(redisContext *context) {
+int send_equipment_status(redisContext *context)
+{
   int output = 0;
   redisReply *status_queue = NULL;
   status_queue = redisCommand(context, "LRANGE messages 0 -1");
@@ -79,9 +81,8 @@ int send_equipment_status(redisContext *context) {
       int buffer_size;
       int counter;
       int total_characters = 0;
-      for (counter = 0; counter < status_queue->elements; counter++) {
+      for (counter = 0; counter < status_queue->elements; counter++)
         total_characters += strlen(status_queue->element[counter]->str);
-      }
       buffer_size = total_characters + (status_queue->elements * 2);
       messages = (char *) malloc(buffer_size * sizeof(char));
       memset(messages, 0, buffer_size * sizeof(char));
@@ -108,9 +109,8 @@ int send_equipment_status(redisContext *context) {
       send_sms(messages);
       free(messages);
 
-      if (!redis_cmd(context, "DEL messages")) {
+      if (!redis_cmd(context, "DEL messages"))
         output = 3;
-      }
     } else {
       output = 2;
     }
@@ -122,7 +122,8 @@ int send_equipment_status(redisContext *context) {
 void capture_pattern(const char *source,
                      char       *datetime,
                      char       *status,
-                     char       *location) {
+                     char       *location)
+{
   const PCRE2_SPTR pattern = (PCRE2_SPTR) "^(\\d{4}-\\d{2}-\\d{2}-\\d{2}:\\d{2}:\\d{2})\\s+([a-z\\-]+)\\s+(LOCATION).*";
   int error_code;
   int matches;
@@ -166,26 +167,28 @@ void capture_pattern(const char *source,
   return;
 }
 
-void send_sms(const char *text) {
+void send_sms(const char *text)
+{
   // TODO: send actual SMS
   printf("%s\n",text);
 }
 
-void set_system_time(void) {
+void set_system_time(void)
+{
   // TODO: set system time
   printf("System time set.\n");
 }
 
 void str_difference(const char *old,
                     const char *new,
-                    char       *holder) {
+                    char       *holder)
+{
   int counter = 0;
   int idx;
   holder[0] = '\0';
   while (1) {
-    if (old[counter] != new[counter]) {
+    if (old[counter] != new[counter])
       break;
-    }
     counter += 1;
   }
   for (idx = 0; counter < strlen(new); idx++) {
