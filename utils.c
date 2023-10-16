@@ -1,18 +1,26 @@
 #define PCRE2_CODE_UNIT_WIDTH 8
 
-#include <glib.h>
 #include <pcre2.h>
 #include <systemd/sd-journal.h>
 #include "utils.h"
 
-int get_int_key(redisContext *context,
-                char         *key,
-                int          *value)
+int get_int_key(const char *key,
+                int        *value)
 {
   int out = 0;
+  redisContext *context = redisConnect("localhost", 6379);
+  if (context == NULL || context->err) {
+    if (context) {
+      sd_journal_send("MESSAGE=Connection error: %s", context->errstr, "PRIORITY=%i", LOG_ERR, NULL);
+      redisFree(context);
+    } else
+      sd_journal_send("MESSAGE=%s", "Connection error: can't allocate redis context", "PRIORITY=%i", LOG_ERR, NULL);
+    return out;
+  }
   redisReply *reply = redisCommand(context, "GET %s", key);
   if (reply == NULL) {
     sd_journal_send("MESSAGE=Error getting key: %s", key, "PRIORITY=%i", LOG_ERR, NULL);
+    redisFree(context);
     return out;
   }
   if (reply->type == REDIS_REPLY_STRING) {
@@ -20,6 +28,7 @@ int get_int_key(redisContext *context,
     out = 1;
   }
   freeReplyObject(reply);
+  redisFree(context);
   return out;
 }
 
@@ -38,7 +47,7 @@ int push_message(redisContext *context,
 int redis_cmd(const char *format,
               ...)
 {
-  int value = 0;
+  int out = 0;
   va_list args;
   va_start(args, format);
 
@@ -58,19 +67,19 @@ int redis_cmd(const char *format,
     } else
       sd_journal_send("MESSAGE=%s", "Connection error: can't allocate redis context", "PRIORITY=%i", LOG_ERR, NULL);
     free(cmd);
-    return value;
+    return out;
   }
   redisReply *reply = redisCommand(context, cmd);
   if (reply == NULL) {
     sd_journal_send("MESSAGE=Error executing Redis command: %s", cmd, "PRIORITY=%i", LOG_ERR, NULL);
   } else {
     if (reply->type != REDIS_REPLY_ERROR)
-      value = 1;
+      out = 1;
     freeReplyObject(reply);
   }
   free(cmd);
   redisFree(context);
-  return value;
+  return out;
 }
 
 int send_equipment_status(redisContext *context)
@@ -165,7 +174,7 @@ void capture_pattern(const char *source,
     pcre2_code_free(re);
     return;
   }
-  PCRE2_SIZE *ovector = pcre2_get_ovector_pointer(match_data);
+  const PCRE2_SIZE *ovector = pcre2_get_ovector_pointer(match_data);
   PCRE2_SPTR substring_datetime = (PCRE2_SPTR) source + ovector[2];
   strncpy(datetime, (char *) substring_datetime, ovector[3] - ovector[2]);
   datetime[ovector[3] - ovector[2]] = '\0';

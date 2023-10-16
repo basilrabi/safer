@@ -14,8 +14,8 @@
  */
 int main(int argc, char **argv) {
   GtkApplication *app;
-  char *home_dir = (char *) g_get_home_dir();
   char *css;
+  const char *home_dir = (char *) g_get_home_dir();
   int buffer_size;
   int status;
 
@@ -30,15 +30,16 @@ int main(int argc, char **argv) {
     if (context) {
       sd_journal_send("MESSAGE=Connection error: %s", context->errstr, "PRIORITY=%i", LOG_ERR, NULL);
       redisFree(context);
-    } else {
+    } else
       sd_journal_send("MESSAGE=%s", "Connection error: can't allocate redis context", "PRIORITY=%i", LOG_ERR, NULL);
-    }
-      return -1;
+    free(css);
+    return -1;
   }
-  if (!redis_cmd("SET shutdown 0"))
+  if (!redis_cmd("SET shutdown 0") || !redis_cmd("SET pre_shutdown 0")) {
+    free(css);
+    redisFree(context);
     return -2;
-  if (!redis_cmd("SET pre_shutdown 0"))
-    return -2;
+  }
 
   pset pointer_set;
   pointer_set.context = context;

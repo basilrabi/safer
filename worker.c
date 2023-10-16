@@ -16,9 +16,9 @@ void status_sender(gpointer data)
   const int seconds_location_period = 30;
 
   char time_buffer[20];
-  char *location = "LOCATION"; // Temporary placeholder for GNSS query
   char *message;
-  char *last_status = "off";
+  const char *location = "LOCATION"; // Temporary placeholder for GNSS query
+  const char *last_status = "off";
   int buffer_size;
   int push_message_status = 0;
   int refresh_status = 0;
@@ -37,14 +37,18 @@ void status_sender(gpointer data)
     equipment_status = redisCommand(context, "GET equipment_status");
     previous_equipment_status = redisCommand(context, "GET previous_equipment_status");
     status_queue = redisCommand(context, "LRANGE messages 0 -1");
-    if (equipment_status == NULL ||
-        previous_equipment_status == NULL ||
-        status_queue == NULL) {
+    if (equipment_status == NULL || previous_equipment_status == NULL || status_queue == NULL) {
       sd_journal_send("MESSAGE=%s", "Failed to get redis response.", "PRIORITY=%i", LOG_ERR, NULL);
+      if (equipment_status != NULL)
+        freeReplyObject(equipment_status);
+      if (previous_equipment_status != NULL)
+        freeReplyObject(previous_equipment_status);
+      if (status_queue != NULL)
+        freeReplyObject(status_queue);
       continue;
     }
-    get_int_key(context, "status_refresh", &refresh_status);
-    get_int_key(context, "shutdown", &shutdown);
+    get_int_key("status_refresh", &refresh_status);
+    get_int_key("shutdown", &shutdown);
     if (shutdown) {
       time_print = localtime(&current_time);
       strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print);

@@ -76,8 +76,8 @@ void activate(GtkApplication *app, gpointer data)
   g_signal_connect(buttonRefuelling, "clicked", G_CALLBACK(toggle_status), pointer_set->context);
   g_signal_connect(buttonTravel, "clicked", G_CALLBACK(toggle_status), pointer_set->context);
   g_signal_connect(buttonWarmup, "clicked", G_CALLBACK(toggle_status), pointer_set->context);
-  g_signal_connect(comboBoxOperator, "changed", G_CALLBACK(toggle_personnel), pointer_set->context);
-  g_signal_connect(comboBoxSupervisor, "changed", G_CALLBACK(toggle_personnel), pointer_set->context);
+  g_signal_connect(comboBoxOperator, "changed", G_CALLBACK(toggle_personnel), NULL);
+  g_signal_connect(comboBoxSupervisor, "changed", G_CALLBACK(toggle_personnel), NULL);
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(buttonWarmup), TRUE);
   gtk_container_set_border_width (GTK_CONTAINER(boxActivity), 5);

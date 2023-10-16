@@ -32,6 +32,7 @@ run_target(
   command : [
     'cppcheck',
     '--enable=all',
+    '--suppress=missingIncludeSystem',
     '--project=' + join_paths(meson.build_root(),
     'compile_commands.json')
   ]

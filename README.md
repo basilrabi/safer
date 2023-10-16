@@ -16,7 +16,8 @@
 ```
 meson setup builddir
 cd builddir
-meson install
+ninja cppcheck
+ninja install
 ```
 
 ### Running
