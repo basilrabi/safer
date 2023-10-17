@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     free(css);
     return -1;
   }
-  if (!redis_cmd("SET shutdown 0") || !redis_cmd("SET pre_shutdown 0")) {
+  if (!redis_cmd("SET shutdown 0") || !redis_cmd("SET pre_shutdown 0") || !redis_cmd("SET pre_shutdown_time NONE")) {
     free(css);
     redisFree(context);
     return -2;

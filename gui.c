@@ -27,8 +27,6 @@ void activate(GtkApplication *app, gpointer data)
   GtkWidget *window = gtk_application_window_new(app);
   guint boxPacking = 0;
 
-  g_thread_new("StatusSenderThread", (GThreadFunc)status_sender, NULL);
-
   populate_comboboxtext(GTK_COMBO_BOX_TEXT(comboBoxOperator), "operators", pointer_set->context);
   populate_comboboxtext(GTK_COMBO_BOX_TEXT(comboBoxSupervisor), "supervisors", pointer_set->context);
 
@@ -83,4 +81,6 @@ void activate(GtkApplication *app, gpointer data)
   gtk_container_set_border_width (GTK_CONTAINER(boxActivity), 5);
   gtk_widget_show_all (window);
   gtk_window_fullscreen (GTK_WINDOW(window));
+  g_thread_new("StatusSenderThread", (GThreadFunc) status_sender, NULL);
+  g_thread_new("ShutdownWatcherThread", (GThreadFunc) shutdown_watcher, NULL);
 }
