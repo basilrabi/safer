@@ -27,7 +27,7 @@ void activate(GtkApplication *app, gpointer data)
   GtkWidget *window = gtk_application_window_new(app);
   guint boxPacking = 0;
 
-  g_thread_new("StatusSenderThread", (GThreadFunc)status_sender, pointer_set->context);
+  g_thread_new("StatusSenderThread", (GThreadFunc)status_sender, NULL);
 
   populate_comboboxtext(GTK_COMBO_BOX_TEXT(comboBoxOperator), "operators", pointer_set->context);
   populate_comboboxtext(GTK_COMBO_BOX_TEXT(comboBoxSupervisor), "supervisors", pointer_set->context);

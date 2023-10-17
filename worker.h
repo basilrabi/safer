@@ -11,7 +11,6 @@
 
 /**
  * shutdown:
- * @data: redisContext to be used for connection
  *
  * TODO: A separate thread for watching the pre_shutdown key which will be
  * triggered when the ignition is off. Should the pre_shutdown key remains
@@ -23,20 +22,18 @@
  * again, the time difference will be analyzed to check if the real-time clock
  * is still functioning properly.
  */
-void shutdown_watcher(gpointer data);
+void shutdown_watcher();
 
 /**
- * sms_receiver:
- * @data: redisContext to be used for connection
+ * status_sender:
  *
  * A background worker which will send the cached equipment status in redis to
  * the server. This will also queues equipment statuses to redis at the defined
  * time interval in the function.
  */
-void status_sender(gpointer data);
+void status_sender();
 
 /* sms_receiver:
- * @data: redisContext to be used for connection
  *
  * Required use cases:
  * 1. updating operators
@@ -47,6 +44,6 @@ void status_sender(gpointer data);
  * 1. habitual over speeding notification
  * 2. deployment/reassignment notification
  */
-void sms_receiver(gpointer data);
+void sms_receiver();
 
 #endif // WORKER_H

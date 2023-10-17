@@ -4,9 +4,20 @@
 #include "worker.h"
 #include "utils.h"
 
-void status_sender(gpointer data)
+void status_sender()
 {
-  redisContext *context = (redisContext *) data;
+  redisContext *context;
+  while (1) {
+    context = redisConnect("localhost", 6379);
+    if (context == NULL || context->err) {
+      if (context) {
+        sd_journal_send("MESSAGE=Connection error: %s", context->errstr, "PRIORITY=%i", LOG_ERR, NULL);
+        redisFree(context);
+      } else
+        sd_journal_send("MESSAGE=%s", "Connection error: can't allocate redis context", "PRIORITY=%i", LOG_ERR, NULL);
+    } else
+      break;
+  }
 
   // Number of messages to be queued before sending
   const int message_limit = 10;
@@ -23,9 +34,9 @@ void status_sender(gpointer data)
   int push_message_status = 0;
   int refresh_status = 0;
   int shutdown = 0;
-  redisReply *equipment_status = NULL;
-  redisReply *previous_equipment_status = NULL;
-  redisReply *status_queue = NULL;
+  redisReply *equipment_status;
+  redisReply *previous_equipment_status;
+  redisReply *status_queu;
   struct tm *time_print;
   time_t current_time;
   time_t refresh_time;
