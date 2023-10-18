@@ -11,15 +11,15 @@ home_dir = cmd.stdout().strip()
 executable(
   'safer',
   [
-    'main.c',
-    'gui.c',
-    'gui.h',
-    'gui_functions.c',
-    'gui_functions.h',
-    'utils.h',
-    'utils.c',
-    'worker.h',
-    'worker.c'
+    'src/gui.c',
+    'src/gui.h',
+    'src/gui_functions.c',
+    'src/gui_functions.h',
+    'src/main.c',
+    'src/utils.h',
+    'src/utils.c',
+    'src/worker.h',
+    'src/worker.c'
   ],
   dependencies : [gtk_dep, hiredis_dep, pcre_dep, systemd_dep],
   install: true,

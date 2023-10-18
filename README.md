@@ -10,6 +10,15 @@
 1. pcre2-devel
 1. systemd-devel
 
+### Raspberrypi OS - Bookworm
+
+1. cppcheck
+1. libgtk-3-dev
+1. libhiredis-dev
+1. libpcre2-dev
+1. libsystemd-dev
+1. meson
+
 ## Installing
 
 ### Building
