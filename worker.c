@@ -122,12 +122,13 @@ void status_sender()
       strcat(message, location);
       push_message_status = push_message(context, message);
       free(message);
-      freeReplyObject(equipment_status);
-      freeReplyObject(previous_equipment_status);
-      freeReplyObject(pre_shutdown_time);
-      freeReplyObject(status_queue);
-      if (!push_message_status)
+      if (!push_message_status) {
+        freeReplyObject(equipment_status);
+        freeReplyObject(pre_shutdown_time);
+        freeReplyObject(previous_equipment_status);
+        freeReplyObject(status_queue);
         continue;
+      }
     }
 
     // TODO: when the new operator is different from the previous, update
@@ -135,8 +136,12 @@ void status_sender()
     // TODO: GNSS query
 
     // Send SMS when the message queue limit is reached or there is shutdown signal.
-    if (status_queue->type == REDIS_REPLY_ARRAY && (status_queue->elements >= message_limit || shutdown))
-      send_equipment_status(context);
+    if (status_queue->type == REDIS_REPLY_ARRAY && (status_queue->elements >= message_limit || shutdown)) {
+      if (send_equipment_status(context) != 0)
+        continue;
+      if (!redis_cmd("SET proceed_shutdown 1"))
+        continue;
+    }
 
     if (equipment_status->type == REDIS_REPLY_STRING && !shutdown) {
       if (refresh_status) {

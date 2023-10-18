@@ -15,9 +15,12 @@
 int main(int argc, char **argv) {
   GtkApplication *app;
   char *css;
+  char time_buffer[20]; // TODO: remove once ignition status is sent
   const char *home_dir = (char *) g_get_home_dir();
   int buffer_size;
   int status;
+  struct tm *time_print; // TODO: remove once ignition status is sent
+  time_t current_time; // TODO: remove once ignition status is sent
 
   buffer_size = strlen(home_dir) + 11;
   css = (char *) malloc(buffer_size * sizeof(char));
@@ -35,7 +38,10 @@ int main(int argc, char **argv) {
     free(css);
     return -1;
   }
-  if (!redis_cmd("SET shutdown 0") || !redis_cmd("SET pre_shutdown 0") || !redis_cmd("SET pre_shutdown_time NONE")) {
+  time(&current_time); // TODO: remove once ignition status is sent
+  time_print = localtime(&current_time); // TODO: remove once ignition status is sent
+  strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print); // TODO: remove once ignition status is sent
+  if (!redis_cmd("SET shutdown 0") || !redis_cmd("SET pre_shutdown 0") || !redis_cmd("SET pre_shutdown_time %s", time_buffer)) {
     free(css);
     redisFree(context);
     return -2;
