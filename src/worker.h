@@ -10,13 +10,24 @@
 #include <gtk/gtk.h>
 
 /**
- * shutdown:
+ * shutdown_trigger:
  *
- * TODO: A separate thread for watching the pre_shutdown key which will be
- * triggered when the ignition is off. Should the pre_shutdown key remains
- * on for the set period of time, the shutdown key will be set to TRUE. The
- * pre_shutdown key is needed to account for temporary disconnection as
- * experienced in the devices from Manila GPS.
+ * Triggers the actual system shutdown after all equipment status are sent. The
+ * following redis keys are triggered in order:
+ * pre_shutdown: triggered by ignition off
+ * shutdown: triggered if ignition is still off within a certain duration
+ * proceed_shutdown: triggered when all messages are sent
+ */
+void shutdown_trigger();
+
+/**
+ * shutdown_watcher:
+ *
+ * A separate thread for watching the pre_shutdown key which will be triggered
+ * when the ignition is off. Should the pre_shutdown key remains on for the set
+ * period of time, the shutdown key will be set to TRUE. The pre_shutdown key is
+ * needed to account for temporary disconnection as experienced in the devices
+ * from Manila GPS.
  *
  * TODO: When shutting down, the time should be recorded so when booting up
  * again, the time difference will be analyzed to check if the real-time clock

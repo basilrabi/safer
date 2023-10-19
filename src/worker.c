@@ -4,6 +4,32 @@
 #include "worker.h"
 #include "utils.h"
 
+void shutdown_trigger()
+{
+  int proceed_shutdown = 0;
+  while (1) {
+    redisContext *context = redisConnect("localhost", 6379);
+    if (context == NULL || context->err) {
+      if (context) {
+        sd_journal_send("MESSAGE=Connection error: %s", context->errstr, "PRIORITY=%i", LOG_ERR, NULL);
+        redisFree(context);
+      } else
+        sd_journal_send("MESSAGE=%s", "Connection error: can't allocate redis context", "PRIORITY=%i", LOG_ERR, NULL);
+    } else
+      break;
+  }
+  while (1) {
+    sleep(1);
+    get_int_key("proceed_shutdown", &proceed_shutdown);
+    if (proceed_shutdown) {
+      if (!redis_cmd("SET proceed_shutdown 0"))
+        continue;
+      pid_t pid = getpid();
+      kill(pid, SIGKILL); // TODO: when the hardware is set-up, this should shutdown the system.
+    }
+  }
+}
+
 void shutdown_watcher()
 {
   redisContext *context;

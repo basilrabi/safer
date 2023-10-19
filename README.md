@@ -25,7 +25,7 @@
 ```
 meson setup builddir
 cd builddir
-ninja cppcheck
+ninja cppcheck # optional
 ninja install
 ```
 
@@ -39,3 +39,4 @@ The program can be run using the command `gui`.
 - The meson build system was used to easily build and manage library dependency
 - Redis was used due to utilize a fast in-memory database which lessens wear on SD card
 - Systemd is used for logging
+- If you are developing in Raspberry Pi OS and using git with signing enabled, you need to add `~/.gnupg/gpg-agent.conf` with the entry `pinentry-program /usr/bin/pinentry-tty`

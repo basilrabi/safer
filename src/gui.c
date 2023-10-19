@@ -83,4 +83,5 @@ void activate(GtkApplication *app, gpointer data)
   gtk_window_fullscreen (GTK_WINDOW(window));
   g_thread_new("StatusSenderThread", (GThreadFunc) status_sender, NULL);
   g_thread_new("ShutdownWatcherThread", (GThreadFunc) shutdown_watcher, NULL);
+  g_thread_new("ShutdownTriggerThread", (GThreadFunc) shutdown_trigger, NULL);
 }
