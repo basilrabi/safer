@@ -7,13 +7,12 @@ void populate_comboboxtext(GtkComboBoxText *box,
                            redisContext    *context)
 {
   redisReply *personnel_list = redisCommand(context, "LRANGE %s 0 -1", list);
-  if (personnel_list == NULL) {
+  if (personnel_list == NULL)
     sd_journal_send("MESSAGE=%s %s.", "Failed to get list of", list, "PRIORITY=%i", LOG_ERR, NULL);
-  } else {
+  else {
     if (personnel_list->type == REDIS_REPLY_ARRAY) {
-      for (int counter = 0; counter < personnel_list->elements; counter++) {
+      for (int counter = 0; counter < personnel_list->elements; counter++)
         gtk_combo_box_text_append_text(box, personnel_list->element[counter]->str);
-      }
     }
     freeReplyObject(personnel_list);
   }

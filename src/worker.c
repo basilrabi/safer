@@ -165,8 +165,10 @@ void status_sender()
     if (status_queue->type == REDIS_REPLY_ARRAY && (status_queue->elements >= message_limit || shutdown)) {
       if (send_equipment_status(context) != 0)
         continue;
-      if (!redis_cmd("SET proceed_shutdown 1"))
-        continue;
+      if (shutdown) {
+        if (!redis_cmd("SET proceed_shutdown 1"))
+          continue;
+      }
     }
 
     if (equipment_status->type == REDIS_REPLY_STRING && !shutdown) {
