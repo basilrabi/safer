@@ -9,6 +9,16 @@ typedef struct pset {
 } pset;
 
 /**
+ * get_char_key:
+ * @key: name of the key in redis where the value will be taken
+ * @value: string where the value will be stored
+ *
+ * Returns: 0 if fail, 1 if success
+ */
+int get_char_key(const char  *key,
+                 char       **value);
+
+/**
  * get_int_key:
  * @key: name of the key in redis where the value will be taken
  * @value: integer where the value will be stored
@@ -71,11 +81,12 @@ void capture_pattern(const char *source,
 
 /**
  * send_sms:
- * @text: a string that will be sent to the server
+ * @format: a string format that will be sent to the server
  *
  * Sends an SMS to the server with the contents of @text.
  */
-void send_sms(const char *text);
+void send_sms(const char *format,
+              ...);
 
 /**
  * set_system_time:
@@ -83,6 +94,16 @@ void send_sms(const char *text);
  * This will synchronize the system using the real-time clock.
  */
 void set_system_time(void);
+
+/**
+ * str_copy:
+ * @destination: string
+ * @source: string
+ *
+ * Copies @source to @destination dynamically.
+ */
+void str_copy(char       **destination,
+              const char  *source);
 
 /**
  * str_difference:

@@ -41,11 +41,15 @@ int main(int argc, char **argv) {
   time(&current_time); // TODO: remove once ignition status is sent
   time_print = localtime(&current_time); // TODO: remove once ignition status is sent
   strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print); // TODO: remove once ignition status is sent
-  if (!redis_cmd("SET shutdown 0") || !redis_cmd("SET pre_shutdown 0") || !redis_cmd("SET pre_shutdown_time %s", time_buffer)) {
-    free(css);
-    redisFree(context);
-    return -2;
-  }
+  if (!redis_cmd("SET shutdown 0") ||
+      !redis_cmd("SET pre_shutdown 0") ||
+      !redis_cmd("SET pre_shutdown_time %s", time_buffer) ||
+      !redis_cmd("SET operator NONE") ||
+      !redis_cmd("SET supervisor NONE")) {
+        free(css);
+        redisFree(context);
+        return -2;
+      }
 
   pset pointer_set;
   pointer_set.context = context;

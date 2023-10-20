@@ -10,6 +10,14 @@
 #include <gtk/gtk.h>
 
 /**
+ * personnel_sender:
+ *
+ * A separate thread for watching the operator and supervisor keys. If there
+ * is an update in these keys, send an SMS.
+ */
+void personnel_sender();
+
+/**
  * shutdown_trigger:
  *
  * Triggers the actual system shutdown after all equipment status are sent. The

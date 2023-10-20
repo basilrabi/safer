@@ -1,8 +1,54 @@
+#include <glib.h>
 #include <hiredis/hiredis.h>
 #include <systemd/sd-journal.h>
 #include <time.h>
 #include "worker.h"
 #include "utils.h"
+
+void personnel_sender()
+{
+  char *operator = NULL;
+  char *previous_operator = NULL;
+  char *previous_supervisor = NULL;
+  char *supervisor = NULL;
+  const int seconds_refresh_cutoff = 300;
+  int refresh = 0;
+  int shutdown = 0;
+  time_t current_time;
+  time_t refresh_time;
+  time(&refresh_time);
+
+  while (1) {
+    sleep(1);
+    time(&current_time);
+    get_int_key("shutdown", &shutdown);
+    if (shutdown)
+      return;
+    if (!get_char_key("operator", &operator) || !get_char_key("supervisor", &supervisor))
+      continue;
+    if (g_strcmp0(operator, "NONE") == 0 || g_strcmp0(supervisor, "NONE") == 0)
+      continue;
+    if (g_strcmp0(operator, previous_operator) != 0) {
+      refresh = 1;
+      str_copy(&previous_operator, operator);
+      time(&refresh_time);
+    }
+    if (g_strcmp0(supervisor, previous_supervisor) != 0) {
+      refresh = 1;
+      str_copy(&previous_supervisor, supervisor);
+      time(&refresh_time);
+    }
+    if (refresh) {
+      if (g_strcmp0(operator, previous_operator) == 0 && g_strcmp0(supervisor, previous_supervisor) == 0) {
+        if ((refresh_time + seconds_refresh_cutoff) <= current_time) {
+          send_sms("Operator: %s\nSupervisor:%s", operator, supervisor);
+          refresh = 0;
+          refresh_time = current_time;
+        }
+      }
+    }
+  }
+}
 
 void shutdown_trigger()
 {

@@ -1,8 +1,40 @@
 #define PCRE2_CODE_UNIT_WIDTH 8
 
+#include <glib.h>
 #include <pcre2.h>
 #include <systemd/sd-journal.h>
 #include "utils.h"
+
+int get_char_key(const char  *key,
+                 char       **value)
+{
+  int out = 0;
+  redisContext *context = redisConnect("localhost", 6379);
+  if (context == NULL || context->err) {
+    if (context) {
+      sd_journal_send("MESSAGE=Connection error: %s", context->errstr, "PRIORITY=%i", LOG_ERR, NULL);
+      redisFree(context);
+    } else
+      sd_journal_send("MESSAGE=%s", "Connection error: can't allocate redis context", "PRIORITY=%i", LOG_ERR, NULL);
+    return out;
+  }
+  redisReply *reply = redisCommand(context, "GET %s", key);
+  if (reply == NULL) {
+    sd_journal_send("MESSAGE=Error getting key: %s", key, "PRIORITY=%i", LOG_ERR, NULL);
+    redisFree(context);
+    return out;
+  }
+  if (reply->type == REDIS_REPLY_STRING) {
+    g_free(*value);
+    int buffer_size = strlen(reply->str);
+    *value = (char *) g_malloc(buffer_size * sizeof(char));
+    strcpy(*value, reply->str);
+    out = 1;
+  }
+  freeReplyObject(reply);
+  redisFree(context);
+  return out;
+}
 
 int get_int_key(const char *key,
                 int        *value)
@@ -50,11 +82,8 @@ int redis_cmd(const char *format,
   int out = 0;
   va_list args;
   va_start(args, format);
-
-  // Determine the length of the formatted string
   int len = vsnprintf(NULL, 0, format, args) + 1;
   va_end(args);
-
   char *cmd = malloc(len);
   va_start(args, format);
   vsnprintf(cmd, len, format, args);
@@ -189,16 +218,34 @@ void capture_pattern(const char *source,
   return;
 }
 
-void send_sms(const char *text)
+void send_sms(const char *format,
+              ...)
 {
+  va_list args;
+  va_start(args, format);
+  int len = vsnprintf(NULL, 0, format, args) + 1;
+  va_end(args);
+  char *text = g_malloc(len);
+  va_start(args, format);
+  vsnprintf(text, len, format, args);
+  va_end(args);
   // TODO: send actual SMS
-  printf("%s\n",text);
+  printf("%s\n", text);
+  g_free(text);
 }
 
 void set_system_time(void)
 {
   // TODO: set system time
   printf("System time set.\n");
+}
+
+void str_copy(char       **destination,
+              const char  *source)
+{
+  g_free(*destination);
+  *destination = g_malloc(strlen(source) * sizeof(char));
+  strcpy(*destination, source);
 }
 
 void str_difference(const char *old,
