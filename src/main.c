@@ -11,22 +11,19 @@
  * Returns: exit status of application
  *          -1 if failed to initialize redisContext
  *          -2 if failed to set pre_shutdown or shutdown key in redis
+ *          -3 if failed to get css
  */
 int main(int argc, char **argv) {
   GtkApplication *app;
   char *css;
   char time_buffer[20]; // TODO: remove once ignition status is sent
   const char *home_dir = (char *) g_get_home_dir();
-  int buffer_size;
   int status;
   struct tm *time_print; // TODO: remove once ignition status is sent
   time_t current_time; // TODO: remove once ignition status is sent
 
-  buffer_size = strlen(home_dir) + 11;
-  css = (char *) malloc(buffer_size * sizeof(char));
-  memset(css, 0, buffer_size * sizeof(char));
-  strcpy(css, home_dir);
-  strcat(css, "/theme.css");
+  if (asprintf(&css, "%s/theme.css", home_dir) < 0)
+    return -3;
   app = gtk_application_new("com.nickelasia.tmc.datamanagement.safer", G_APPLICATION_DEFAULT_FLAGS);
   redisContext *context = redisConnect("localhost", 6379);
   if (context == NULL || context->err) {
