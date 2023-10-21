@@ -35,8 +35,32 @@ The program can be run using the command `gui`.
 
 ## Development Notes
 
+### Software
+
 - C language was used since it is known to have CPU-level optimizations
 - The meson build system was used to easily build and manage library dependency
 - Redis was used due to utilize a fast in-memory database which lessens wear on SD card
 - Systemd is used for logging
 - If you are developing in Raspberry Pi OS and using git with signing enabled, you need to add `~/.gnupg/gpg-agent.conf` with the entry `pinentry-program /usr/bin/pinentry-tty`
+
+### Hardware
+
+#### Raspberry Pi
+
+- Enable serial port connection in raspi-config
+- Enable I2C kernel module in raspi-config
+
+#### Waveshare GNSS/GSM Hat
+
+To activate the module the following python script can be run:
+
+```
+import RPi.GPIO as GPIO
+import time
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(4, GPIO.OUT)
+time.sleep(2)
+GPIO.output(4, False)
+
+```
