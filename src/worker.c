@@ -1,5 +1,7 @@
+#define _GNU_SOURCE
 #include <glib.h>
 #include <hiredis/hiredis.h>
+#include <stdio.h>
 #include <systemd/sd-journal.h>
 #include <time.h>
 #include "worker.h"

@@ -1,23 +1,15 @@
 # GUI for Equipment Operators
 
-## Build Requirements
-
-### Fedora 39
-
-1. gtk3-devel
-1. hiredis-devel
-1. meson
-1. pcre2-devel
-1. systemd-devel
-
-### Raspberrypi OS - Bookworm
+## Build Requirements (Raspberrypi OS - Bookworm)
 
 1. cppcheck
-1. libgtk-3-dev
-1. libhiredis-dev
-1. libpcre2-dev
-1. libsystemd-dev
-1. meson
+2. libgtk-3-dev
+3. libhiredis-dev
+4. libpcre2-dev
+5. libsystemd-dev
+6. meson
+7. python3-hiredis
+8. python3-redis
 
 ## Installing
 
@@ -50,17 +42,24 @@ The program can be run using the command `gui`.
 - Enable serial port connection in raspi-config
 - Enable I2C kernel module in raspi-config
 
-#### Waveshare GNSS/GSM Hat
+#### Waveshare GNSS/GSM HAT
 
-To activate the module the following python script can be run:
+##### AT Commands 
 
-```
-import RPi.GPIO as GPIO
-import time
+- `AT` - Checks if HAT status is `OK`
+- `AT+CPIN?` - Check if the SIM card is `READY`
 
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(4, GPIO.OUT)
-time.sleep(2)
-GPIO.output(4, False)
+###### Clock
 
-```
+- `AT+CCLK?` - Gets the present time.
+- `AT+CCLK="23/10/24,21:18:30+32"` - Sets the clock to `2023-10-24 21:18:30+8` 
+
+###### GNSS
+
+- `AT+CGNSPWR?` - Checks the power status of GNSS
+
+###### GSM
+
+`AT+CMGF?` - Gets whether SMS is read/sent as PDU (0) or text (1)
+`AT+CMGF=1` - Sets SMS reading/sending as text
+`AT+CMGL="REC UNREAD"` - Reads all unread SMS

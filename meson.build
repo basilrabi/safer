@@ -25,6 +25,7 @@ executable(
   install: true,
   install_dir: home_dir / 'bin'
 )
+install_data('hat.py', install_dir: home_dir / 'bin')
 install_data('theme.css', install_dir: home_dir)
 
 run_target(

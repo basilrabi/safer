@@ -77,10 +77,12 @@ void activate(GtkApplication *app, gpointer data)
   g_signal_connect(comboBoxOperator, "changed", G_CALLBACK(toggle_personnel), NULL);
   g_signal_connect(comboBoxSupervisor, "changed", G_CALLBACK(toggle_personnel), NULL);
 
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(buttonWarmup), TRUE);
-  gtk_container_set_border_width (GTK_CONTAINER(boxActivity), 5);
-  gtk_widget_show_all (window);
-  gtk_window_fullscreen (GTK_WINDOW(window));
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(buttonWarmup), TRUE);
+  gtk_container_set_border_width(GTK_CONTAINER(boxActivity), 5);
+  gtk_widget_show_all(window);
+  /*
+  gtk_window_fullscreen(GTK_WINDOW(window)); TODO: restore fullscreen once testing is done
+   */
   g_thread_new("PersonnelSenderThread", (GThreadFunc) personnel_sender, NULL);
   g_thread_new("StatusSenderThread", (GThreadFunc) status_sender, NULL);
   g_thread_new("ShutdownWatcherThread", (GThreadFunc) shutdown_watcher, NULL);
