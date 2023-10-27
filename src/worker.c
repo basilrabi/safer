@@ -72,8 +72,7 @@ void shutdown_trigger()
     if (proceed_shutdown) {
       if (!redis_cmd("SET proceed_shutdown 0"))
         continue;
-      pid_t pid = getpid();
-      kill(pid, SIGKILL); // TODO: when the hardware is set-up, this should shutdown the system.
+      system("sudo shutdown -h now");
     }
   }
 }
