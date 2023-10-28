@@ -55,6 +55,7 @@ void personnel_sender()
 void shutdown_trigger()
 {
   int proceed_shutdown = 0;
+  int serial_file = -1;
   while (1) {
     redisContext *context = redisConnect("localhost", 6379);
     if (context == NULL || context->err) {
@@ -72,6 +73,10 @@ void shutdown_trigger()
     if (proceed_shutdown) {
       if (!redis_cmd("SET proceed_shutdown 0"))
         continue;
+      get_int_key("serial_file", &serial_file);
+      if (serial_file < 0)
+        continue;
+      close(serial_file);
       system("sudo shutdown -h now");
     }
   }

@@ -12,8 +12,9 @@
  *
  * Returns: exit status of application
  *          -1 if failed to initialize redisContext
- *          -2 if failed to set pre_shutdown or shutdown key in redis
+ *          -2 if failed to set redis keys
  *          -3 if failed to get css
+ *          -4 if failed to open serial connection to the GNSS/GSM HAT
  */
 int main(int argc, char **argv) {
   GtkApplication *app;
@@ -22,11 +23,25 @@ int main(int argc, char **argv) {
   const char *home_dir = (char *) g_get_home_dir();
   int hat = 0;
   int status;
+  int serial_file;
   struct tm *time_print; // TODO: remove once ignition status is sent
   time_t current_time; // TODO: remove once ignition status is sent
 
   if (asprintf(&css, "%s/theme.css", home_dir) < 0)
     return -3;
+
+  /* Activate HAT */
+  while (!hat) {
+    system("hat.py");
+    sleep(1);
+    get_int_key("hat", &hat);
+  }
+
+  initialize_serial_connection(&serial_file);
+  if (serial_file < 0) {
+    sd_journal_send("MESSAGE=Serial connection error.", "PRIORITY=%i", LOG_ERR, NULL);
+    return -4;
+  }
   app = gtk_application_new("com.nickelasia.tmc.datamanagement.safer", G_APPLICATION_DEFAULT_FLAGS);
   redisContext *context = redisConnect("localhost", 6379);
   if (context == NULL || context->err) {
@@ -47,17 +62,13 @@ int main(int argc, char **argv) {
       !redis_cmd("SET pre_shutdown_time %s", time_buffer) ||
       !redis_cmd("SET proceed_shutdown 0") ||
       !redis_cmd("SET operator NONE") ||
+      !redis_cmd("SET serial_file %d", serial_file) ||
       !redis_cmd("SET supervisor NONE")) {
+        close(serial_file);
         free(css);
         redisFree(context);
         return -2;
       }
-  /* Activate HAT */
-  while (!hat) {
-    system("hat.py");
-    sleep(1);
-    get_int_key("hat", &hat);
-  }
   pset pointer_set;
   pointer_set.context = context;
   pointer_set.css = css;

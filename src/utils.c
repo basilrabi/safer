@@ -1,8 +1,11 @@
 #define PCRE2_CODE_UNIT_WIDTH 8
 
+#include <fcntl.h>
 #include <glib.h>
 #include <pcre2.h>
 #include <systemd/sd-journal.h>
+#include <termios.h>
+#include <unistd.h>
 #include "utils.h"
 
 int get_char_key(const char  *key,
@@ -215,6 +218,37 @@ void capture_pattern(const char *source,
   location[ovector[7] - ovector[6]] = '\0';
   pcre2_code_free(re);
   pcre2_match_data_free(match_data);
+  return;
+}
+
+void initialize_serial_connection(int *serial_file_descriptor)
+{
+  int baud_rate = B115200;
+  *serial_file_descriptor = open("/dev/ttyS0", O_RDWR | O_NOCTTY);
+  if (*serial_file_descriptor < 0)
+    return;
+  struct termios tty;
+  if (tcgetattr(*serial_file_descriptor, &tty) != 0) {
+    perror("Error getting serial attributes");
+    close(*serial_file_descriptor);
+    *serial_file_descriptor = -1;
+    return;
+  }
+  cfsetospeed(&tty, baud_rate);
+  cfsetispeed(&tty, baud_rate);
+  tty.c_cflag &= ~PARENB;
+  tty.c_cflag &= ~CSTOPB;
+  tty.c_cflag &= ~CSIZE;
+  tty.c_cflag |= CS8;
+  tty.c_cflag &= ~CRTSCTS;
+  tty.c_cflag |= CREAD | CLOCAL;
+  tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+  tty.c_cc[VMIN] = 0;
+  tty.c_cc[VTIME] = 10;
+  if (tcsetattr(*serial_file_descriptor, TCSANOW, &tty) != 0) {
+    close(*serial_file_descriptor);
+    *serial_file_descriptor = -1;
+  }
   return;
 }
 

@@ -79,6 +79,15 @@ void capture_pattern(const char *source,
                      char       *status,
                      char       *location);
 
+/*
+ * initialize_serial_connection:
+ * @serial_file_descriptor: file descriptor of the opened serial port
+ *
+ * Initializes and opens a serial port connection. The file descriptor of the
+ * opened connection is saved.
+ */
+void initialize_serial_connection(int *serial_file_descriptor);
+
 /**
  * send_sms:
  * @format: a string format that will be sent to the server
