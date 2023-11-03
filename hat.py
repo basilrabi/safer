@@ -17,6 +17,7 @@ if cmd('AT') == '':
     gpio.setup(4, gpio.OUT)
     time.sleep(2)
     gpio.output(4, False)
+    gpio.cleanup()
 
 ser.close()
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)

@@ -64,6 +64,18 @@ int redis_cmd(const char *format,
  */
 int send_equipment_status(redisContext *context);
 
+/*
+ * at_cmd:
+ * @cmd: AT command to run
+ * @reponse: the returned response of the AT command
+ * @timeout: number of seconds to wait for before reading the response.
+ *
+ * Runs the AT command @cmd and saves reply to @response.
+ */
+void at_cmd(const char    *cmd,
+            char         **response,
+            unsigned int   timeout);
+
 /**
  * capture_pattern:
  * @source: a string that contains the full text to be analyzed

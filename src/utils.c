@@ -173,6 +173,40 @@ int send_equipment_status(redisContext *context)
   return output;
 }
 
+void at_cmd(const char    *cmd,
+            char         **response,
+            unsigned int   timeout)
+{
+  char *at_command;
+  char at_response[1024];
+  int serial_file = -1;
+  get_int_key("serial_file", &serial_file);
+  if (serial_file < 0) {
+    sd_journal_send("MESSAGE=Error establishing serial connection while running AT command: %s", cmd, "PRIORITY=%i", LOG_ERR, NULL);
+    return;
+  }
+  at_command = (char *) g_malloc((strlen(cmd) + 3) * sizeof(char));
+  if (at_command == NULL) {
+    sd_journal_send("MESSAGE=AT Command allocation error: %s", cmd, "PRIORITY=%i", LOG_ERR, NULL);
+    return;
+  }
+  strcpy(at_command, cmd);
+  strcat(at_command, "\r\n");
+  static GMutex mutex;
+  g_mutex_lock(&mutex);
+  write(serial_file, at_command, strlen(at_command));
+  sleep(timeout);
+  ssize_t num_bytes = read(serial_file, at_response, sizeof(at_response));
+  if (num_bytes > 0)
+    at_response[num_bytes] = '\0';
+  g_mutex_unlock(&mutex);
+  g_free(at_command);
+  g_free(*response);
+  *response = (char *) g_malloc(strlen(at_response) * sizeof(char));
+  strcpy(*response, at_response);
+  return;
+}
+
 void capture_pattern(const char *source,
                      char       *datetime,
                      char       *status,
@@ -229,7 +263,6 @@ void initialize_serial_connection(int *serial_file_descriptor)
     return;
   struct termios tty;
   if (tcgetattr(*serial_file_descriptor, &tty) != 0) {
-    perror("Error getting serial attributes");
     close(*serial_file_descriptor);
     *serial_file_descriptor = -1;
     return;
@@ -259,27 +292,33 @@ void send_sms(const char *format,
   va_start(args, format);
   int len = vsnprintf(NULL, 0, format, args) + 1;
   va_end(args);
-  char *text = g_malloc(len);
+  char *text = (char *) g_malloc(len * sizeof(char));
   va_start(args, format);
   vsnprintf(text, len, format, args);
   va_end(args);
   // TODO: send actual SMS
   printf("%s\n", text);
   g_free(text);
+  return;
 }
 
 void set_system_time(void)
 {
+  char *rtc = NULL;
+  at_cmd("AT+CCLK?", &rtc, 1);
   // TODO: set system time
-  printf("System time set.\n");
+  printf("System time set: %s\n", rtc);
+  g_free(rtc);
+  return;
 }
 
 void str_copy(char       **destination,
               const char  *source)
 {
   g_free(*destination);
-  *destination = g_malloc(strlen(source) * sizeof(char));
+  *destination = (char *) g_malloc(strlen(source) * sizeof(char));
   strcpy(*destination, source);
+  return;
 }
 
 void str_difference(const char *old,
@@ -299,4 +338,5 @@ void str_difference(const char *old,
     counter += 1;
   }
   holder[idx] = '\0';
+  return;
 }

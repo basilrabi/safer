@@ -63,3 +63,21 @@ The program can be run using the command `gui`.
 `AT+CMGF?` - Gets whether SMS is read/sent as PDU (0) or text (1)
 `AT+CMGF=1` - Sets SMS reading/sending as text
 `AT+CMGL="REC UNREAD"` - Reads all unread SMS
+
+### Sample Scripts
+
+```python3
+import serial
+import time
+ser = serial.Serial("/dev/ttyS0", 115200)
+
+def cmd(command):
+    ser.write(f"{command}\r\n".encode())
+    time.sleep(0.1)
+    return ser.read(ser.inWaiting()).decode()
+
+cmd('AT+CCLK?')
+cmd('AT+CCLK="23/11/03,13:50:30+32"')
+
+ser.close()
+```
