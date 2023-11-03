@@ -77,7 +77,8 @@ void shutdown_trigger()
       if (serial_file < 0)
         continue;
       close(serial_file);
-      system("sudo shutdown -h now");
+      // TODO: switch to actual shutdown once testing is done
+      system("sudo reboot");
     }
   }
 }

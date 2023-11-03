@@ -72,7 +72,10 @@ int main(int argc, char **argv) {
   pset pointer_set;
   pointer_set.context = context;
   pointer_set.css = css;
-  set_system_time();
+  while (1) {
+    if (set_system_time())
+      break;
+  }
   g_signal_connect(app, "activate", G_CALLBACK(activate), &pointer_set);
   status = g_application_run(G_APPLICATION(app), argc, argv);
   g_object_unref(app);

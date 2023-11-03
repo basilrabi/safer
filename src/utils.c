@@ -5,6 +5,7 @@
 #include <pcre2.h>
 #include <systemd/sd-journal.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
 #include "utils.h"
 
@@ -173,6 +174,41 @@ int send_equipment_status(redisContext *context)
   return output;
 }
 
+int set_system_time(void)
+{
+  char *rtc = NULL;
+  at_cmd("AT+CCLK?", &rtc, 1);
+  const char *success = strstr(rtc, "OK");
+  int out = 0;
+  if (success) {
+    char c_year[3];
+    char c_month[3];
+    char c_day[3];
+    char c_time[9];
+    char cmd[57];
+    int year = 2000;
+    str_sub(c_year, rtc, 19, 20);
+    str_sub(c_month, rtc, 22, 23);
+    str_sub(c_day, rtc, 25, 26);
+    str_sub(c_time, rtc, 28, 35);
+    year += atoi(c_year);
+    sprintf(cmd, "sudo timedatectl set-time \"%i-%s-%s %s\"", year, c_month, c_day, c_time);
+    system(cmd);
+    // Increase by 1 second due to AT timeout.
+    time_t current_time;
+    time(&current_time);
+    current_time += 1;
+    struct tm *new_time = localtime(&current_time);
+    char time_string[20];
+    strftime(time_string, sizeof(time_string), "%Y-%m-%d %H:%M:%S", new_time);
+    sprintf(cmd, "sudo timedatectl set-time \"%s\"", time_string);
+    system(cmd);
+    out = 1;
+  }
+  g_free(rtc);
+  return out;
+}
+
 void at_cmd(const char    *cmd,
             char         **response,
             unsigned int   timeout)
@@ -302,16 +338,6 @@ void send_sms(const char *format,
   return;
 }
 
-void set_system_time(void)
-{
-  char *rtc = NULL;
-  at_cmd("AT+CCLK?", &rtc, 1);
-  // TODO: set system time
-  printf("System time set: %s\n", rtc);
-  g_free(rtc);
-  return;
-}
-
 void str_copy(char       **destination,
               const char  *source)
 {
@@ -338,5 +364,17 @@ void str_difference(const char *old,
     counter += 1;
   }
   holder[idx] = '\0';
+  return;
+}
+
+void str_sub(char       *destination,
+             const char *source,
+             const int   start,
+             const int   end)
+{
+  int i, j = 0;
+  for (i = start; i <= end; ++i)
+    destination[j++] = source[i];
+  destination[j] = '\0';
   return;
 }

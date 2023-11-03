@@ -64,6 +64,16 @@ int redis_cmd(const char *format,
  */
 int send_equipment_status(redisContext *context);
 
+/**
+ * set_system_time:
+ *
+ * This will synchronize the system using the real-time clock.
+ *
+ * Returns: 1 if success
+ *          0 if fail
+ */
+int set_system_time(void);
+
 /*
  * at_cmd:
  * @cmd: AT command to run
@@ -110,13 +120,6 @@ void send_sms(const char *format,
               ...);
 
 /**
- * set_system_time:
- *
- * This will synchronize the system using the real-time clock.
- */
-void set_system_time(void);
-
-/**
  * str_copy:
  * @destination: string
  * @source: string
@@ -140,6 +143,20 @@ void str_copy(char       **destination,
 void str_difference(const char *old_string,
                     const char *new_string,
                     char       *holder);
+
+/**
+ * str_sub:
+ * @destination: the substring to be saved
+ * @source: a string
+ * @start: start index of the substring in @source
+ * @end: end index of the substring in @source
+ *
+ * Gets a substring of @source and save it to @destination.
+ */
+void str_sub(char       *destination,
+             const char *source,
+             const int   start,
+             const int   end);
 
 #endif // UTILS_H
 
