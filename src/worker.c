@@ -99,7 +99,9 @@ void shutdown_watcher()
   }
   // Number of seconds before the shutdown key is triggered.
   const int seconds_refresh_cutoff = 5;
+  char time_buffer[20];
   int pre_shutdown = 0;
+  struct tm *time_print;
   time_t current_time;
   time_t refresh_time;
   time(&refresh_time);
@@ -109,7 +111,9 @@ void shutdown_watcher()
     get_int_key("pre_shutdown", &pre_shutdown);
     if (pre_shutdown) {
       if ((refresh_time + seconds_refresh_cutoff) <= current_time) {
-        if (!redis_cmd("SET shutdown 1"))
+        time_print = localtime(&refresh_time);
+        strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print);
+        if (!redis_cmd("SET shutdown 1") || !redis_cmd("SET shutdown_time %s", time_buffer))
           continue;
         else {
           redisFree(context);

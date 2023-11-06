@@ -186,13 +186,14 @@ int set_system_time(void)
     char c_day[3];
     char c_time[9];
     char cmd[57];
+    const char *pre_cmd = "sudo timedatectl set-time";
     int year = 2000;
     str_sub(c_year, rtc, 19, 20);
     str_sub(c_month, rtc, 22, 23);
     str_sub(c_day, rtc, 25, 26);
     str_sub(c_time, rtc, 28, 35);
     year += atoi(c_year);
-    sprintf(cmd, "sudo timedatectl set-time \"%i-%s-%s %s\"", year, c_month, c_day, c_time);
+    sprintf(cmd, "%s \"%i-%s-%s %s\"", pre_cmd, year, c_month, c_day, c_time);
     system(cmd);
     // Increase by 1 second due to AT timeout.
     time_t current_time;
@@ -201,7 +202,7 @@ int set_system_time(void)
     struct tm *new_time = localtime(&current_time);
     char time_string[20];
     strftime(time_string, sizeof(time_string), "%Y-%m-%d %H:%M:%S", new_time);
-    sprintf(cmd, "sudo timedatectl set-time \"%s\"", time_string);
+    sprintf(cmd, "%s \"%s\"",pre_cmd, time_string);
     system(cmd);
     out = 1;
   }
