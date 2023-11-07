@@ -195,8 +195,6 @@ void status_sender()
       }
     }
 
-    // TODO: when the new operator is different from the previous, update
-    // TODO: when the new supervisor is different from the previous, update
     // TODO: GNSS query
 
     // Send SMS when the message queue limit is reached or there is shutdown signal.

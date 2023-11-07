@@ -20,13 +20,13 @@ int main(int argc, char **argv) {
   GtkApplication *app;
   char *css;
   char serial_str[20];
-  char time_buffer[20]; // TODO: remove once ignition status is sent
+  char time_buffer[20]; // TODO: remove once ignition off status is sent
   const char *home_dir = (char *) g_get_home_dir();
   int hat = 0;
   int status;
   int serial_file;
-  struct tm *time_print; // TODO: remove once ignition status is sent
-  time_t current_time; // TODO: remove once ignition status is sent
+  struct tm *time_print; // TODO: remove once ignition off status is sent
+  time_t current_time; // TODO: remove once ignition off status is sent
 
   if (asprintf(&css, "%s/theme.css", home_dir) < 0)
     return -3;
@@ -55,12 +55,14 @@ int main(int argc, char **argv) {
     free(css);
     return -1;
   }
-  time(&current_time); // TODO: remove once ignition status is sent
-  time_print = localtime(&current_time); // TODO: remove once ignition status is sent
-  strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print); // TODO: remove once ignition status is sent
+  time(&current_time); // TODO: remove once ignition off status is sent
+  time_print = localtime(&current_time); // TODO: remove once ignition off status is sent
+  strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print); // TODO: remove once ignition off status is sent
   if (!redis_cmd("SET", "hat", "0") ||
       !redis_cmd("SET", "shutdown", "0") ||
       !redis_cmd("SET", "pre_shutdown", "0") ||
+      // TODO: The ignition off time (pre_shutdown_time) will be set by the UPS HAT.
+      // Temporarily set a place holder for now but once the code from the UPS HAT is done, remove this.
       !redis_cmd("SET", "pre_shutdown_time", time_buffer) ||
       !redis_cmd("SET", "proceed_shutdown", "0") ||
       !redis_cmd("SET", "operator", "NONE") ||

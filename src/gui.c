@@ -33,7 +33,6 @@ void activate(GtkApplication *app, gpointer data)
   gtk_container_add(GTK_CONTAINER(window), notebook);
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), boxPersonnel, tabLabelPersonnel);
 
-  // TODO: content for personnel
   gtk_box_pack_start(GTK_BOX(boxPersonnelOperator), boxLabelOperator, FALSE, FALSE, boxPacking);
   gtk_box_pack_start(GTK_BOX(boxPersonnelOperator), comboBoxOperator, TRUE, TRUE, boxPacking);
   gtk_box_pack_start(GTK_BOX(boxPersonnelSupervisor), boxLabelSupervisor, FALSE, FALSE, boxPacking);
