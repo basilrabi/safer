@@ -29,27 +29,18 @@ int get_int_key(const char *key,
                 int        *value);
 
 /**
- * push_message:
- * @context: redisContext to be used
- * @message: the message to be pushed
- *
- * Pushes @message to the messages list in redis.
- *
- * Returns: 0 if fail, 1 if success.
- */
-int push_message(redisContext *context,
-                 const char   *message);
-
-/**
  * redis_cmd:
- * @format: a string format which will be used as redis command
+ * @cmd: a redis command
+ * @key: redis key to modify
+ * @x: a value
  *
- * Runs a redis command.
+ * Runs a redis command with 1 optional value.
  *
  * Returns: 0 if fail, 1 if success.
  */
-int redis_cmd(const char *format,
-              ...);
+int redis_cmd(const char *cmd,
+              const char *key,
+              const char *x);
 
 /**
  * send_equipment_status:

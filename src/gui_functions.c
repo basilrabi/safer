@@ -26,9 +26,9 @@ void toggle_personnel(GtkWidget *box,
   if (shutdown)
     return;
   if (gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(box)) == NULL)
-    redis_cmd("SET %s NONE", gtk_widget_get_name(box));
+    redis_cmd("SET", gtk_widget_get_name(box), "NONE");
   else
-    redis_cmd("SET %s %s", gtk_widget_get_name(box), gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(box)));
+    redis_cmd("SET", gtk_widget_get_name(box), gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(box)));
   return;
 }
 
@@ -48,14 +48,14 @@ void toggle_status(GtkWidget *button,
       return;
     }
     if (previous->type == REDIS_REPLY_STRING) {
-      redis_cmd("SET previous_equipment_status %s", previous->str);
+      redis_cmd("SET", "previous_equipment_status", previous->str);
       if (strcmp(previous->str, gtk_widget_get_name(button)) != 0) {
-        redis_cmd("SET equipment_status %s", gtk_widget_get_name(button));
-        redis_cmd("SET status_refresh 1");
+        redis_cmd("SET", "equipment_status", gtk_widget_get_name(button));
+        redis_cmd("SET", "status_refresh", "1");
       }
     } else {
-      redis_cmd("SET equipment_status %s", gtk_widget_get_name(button));
-      redis_cmd("SET status_refresh 1");
+      redis_cmd("SET", "equipment_status", gtk_widget_get_name(button));
+      redis_cmd("SET", "status_refresh", "1");
     }
     freeReplyObject(previous);
   }

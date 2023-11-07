@@ -68,30 +68,11 @@ int get_int_key(const char *key,
   return out;
 }
 
-int push_message(redisContext *context,
-                 const char   *message)
-{
-  redisReply *reply = redisCommand(context, "RPUSH messages %s", message);
-  if (reply == NULL) {
-    sd_journal_send("MESSAGE=Error pushing message: %s", message, "PRIORITY=%i", LOG_ERR, NULL);
-    return 0;
-  }
-  freeReplyObject(reply);
-  return 1;
-}
-
-int redis_cmd(const char *format,
-              ...)
+int redis_cmd(const char *cmd,
+              const char *key,
+              const char *x)
 {
   int out = 0;
-  va_list args;
-  va_start(args, format);
-  int len = vsnprintf(NULL, 0, format, args) + 1;
-  va_end(args);
-  char *cmd = malloc(len);
-  va_start(args, format);
-  vsnprintf(cmd, len, format, args);
-  va_end(args);
   redisContext *context = redisConnect("localhost", 6379);
   if (context == NULL || context->err) {
     if (context) {
@@ -99,18 +80,32 @@ int redis_cmd(const char *format,
       redisFree(context);
     } else
       sd_journal_send("MESSAGE=%s", "Connection error: can't allocate redis context", "PRIORITY=%i", LOG_ERR, NULL);
-    free(cmd);
     return out;
   }
-  redisReply *reply = redisCommand(context, cmd);
+  char *buffer;
+  redisReply *reply;
+  if (cmd && key && x) {
+    buffer = (char *) malloc((strlen(cmd) + strlen(key) + strlen(x) + 3) * sizeof(char));
+    sprintf(buffer, "%s %s %s", cmd, key, x);
+    reply = redisCommand(context, "%s %s %s", cmd, key, x);
+  }
+  else if (cmd && key) {
+    buffer = (char *) malloc((strlen(cmd) + strlen(key) + 2) * sizeof(char));
+    sprintf(buffer, "%s %s", cmd, key);
+    reply = redisCommand(context, "%s %s", cmd, key);
+  }
+  else {
+    g_error("Invalid redis command.");
+    return out;
+  }
   if (reply == NULL) {
-    sd_journal_send("MESSAGE=Error executing Redis command: %s", cmd, "PRIORITY=%i", LOG_ERR, NULL);
+    sd_journal_send("MESSAGE=Error executing Redis command: %s", buffer, "PRIORITY=%i", LOG_ERR, NULL);
   } else {
     if (reply->type != REDIS_REPLY_ERROR)
       out = 1;
     freeReplyObject(reply);
   }
-  free(cmd);
+  free(buffer);
   redisFree(context);
   return out;
 }
@@ -164,7 +159,7 @@ int send_equipment_status(redisContext *context)
       send_sms(messages);
       free(messages);
 
-      if (!redis_cmd("DEL messages"))
+      if (!redis_cmd("DEL", "messages", NULL))
         output = 3;
     } else {
       output = 2;

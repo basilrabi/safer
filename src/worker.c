@@ -71,7 +71,7 @@ void shutdown_trigger()
     sleep(1);
     get_int_key("proceed_shutdown", &proceed_shutdown);
     if (proceed_shutdown) {
-      if (!redis_cmd("SET proceed_shutdown 0"))
+      if (!redis_cmd("SET", "proceed_shutdown", "0"))
         continue;
       get_int_key("serial_file", &serial_file);
       if (serial_file < 0)
@@ -113,7 +113,7 @@ void shutdown_watcher()
       if ((refresh_time + seconds_refresh_cutoff) <= current_time) {
         time_print = localtime(&refresh_time);
         strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print);
-        if (!redis_cmd("SET shutdown 1") || !redis_cmd("SET shutdown_time %s", time_buffer))
+        if (!redis_cmd("SET", "shutdown", "1") || !redis_cmd("SET", "shutdown_time", time_buffer))
           continue;
         else {
           redisFree(context);
@@ -187,7 +187,7 @@ void status_sender()
         freeReplyObject(status_queue);
         continue;
       }
-      push_message_status = push_message(context, message);
+      push_message_status = redis_cmd("RPUSH", "messages", message);
       free(message);
       if (!push_message_status) {
         freeReplyObject(status_queue);
@@ -204,7 +204,7 @@ void status_sender()
       if (send_equipment_status(context) != 0)
         continue;
       if (shutdown) {
-        if (!redis_cmd("SET proceed_shutdown 1"))
+        if (!redis_cmd("SET", "proceed_shutdown", "1"))
           continue;
       }
     }
@@ -213,7 +213,7 @@ void status_sender()
       if (refresh_status) {
         if (g_strcmp0(previous_equipment_status, equipment_status) == 0) {
           if ((refresh_time + seconds_refresh_cutoff) <= current_time) {
-            if (!redis_cmd("SET status_refresh 0")) {
+            if (!redis_cmd("SET", "status_refresh", "0")) {
               freeReplyObject(status_queue);
               continue;
             }
@@ -223,7 +223,7 @@ void status_sender()
               freeReplyObject(status_queue);
               continue;
             }
-            push_message_status = push_message(context, message);
+            push_message_status = redis_cmd("RPUSH", "messages", message);
             free(message);
             if (!push_message_status) {
               freeReplyObject(status_queue);
@@ -232,7 +232,7 @@ void status_sender()
             refresh_time = current_time;
           }
         } else {
-          if (!redis_cmd("SET previous_equipment_status %s", equipment_status)) {
+          if (!redis_cmd("SET", "previous_equipment_status", equipment_status)) {
             freeReplyObject(status_queue);
             continue;
           }
@@ -247,7 +247,7 @@ void status_sender()
             freeReplyObject(status_queue);
             continue;
           }
-          push_message_status = push_message(context, message);
+          push_message_status = redis_cmd("RPUSH", "messages", message);
           free(message);
           if (!push_message_status) {
             freeReplyObject(status_queue);

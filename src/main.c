@@ -19,6 +19,7 @@
 int main(int argc, char **argv) {
   GtkApplication *app;
   char *css;
+  char serial_str[20];
   char time_buffer[20]; // TODO: remove once ignition status is sent
   const char *home_dir = (char *) g_get_home_dir();
   int hat = 0;
@@ -41,7 +42,8 @@ int main(int argc, char **argv) {
   if (serial_file < 0) {
     sd_journal_send("MESSAGE=Serial connection error.", "PRIORITY=%i", LOG_ERR, NULL);
     return -4;
-  }
+  } else
+    snprintf(serial_str, sizeof(serial_str), "%d", serial_file);
   app = gtk_application_new("com.nickelasia.tmc.datamanagement.safer", G_APPLICATION_DEFAULT_FLAGS);
   redisContext *context = redisConnect("localhost", 6379);
   if (context == NULL || context->err) {
@@ -56,14 +58,14 @@ int main(int argc, char **argv) {
   time(&current_time); // TODO: remove once ignition status is sent
   time_print = localtime(&current_time); // TODO: remove once ignition status is sent
   strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d-%H:%M:%S", time_print); // TODO: remove once ignition status is sent
-  if (!redis_cmd("SET hat 0") ||
-      !redis_cmd("SET shutdown 0") ||
-      !redis_cmd("SET pre_shutdown 0") ||
-      !redis_cmd("SET pre_shutdown_time %s", time_buffer) ||
-      !redis_cmd("SET proceed_shutdown 0") ||
-      !redis_cmd("SET operator NONE") ||
-      !redis_cmd("SET serial_file %d", serial_file) ||
-      !redis_cmd("SET supervisor NONE")) {
+  if (!redis_cmd("SET", "hat", "0") ||
+      !redis_cmd("SET", "shutdown", "0") ||
+      !redis_cmd("SET", "pre_shutdown", "0") ||
+      !redis_cmd("SET", "pre_shutdown_time", time_buffer) ||
+      !redis_cmd("SET", "proceed_shutdown", "0") ||
+      !redis_cmd("SET", "operator", "NONE") ||
+      !redis_cmd("SET", "serial_file", serial_str) ||
+      !redis_cmd("SET", "supervisor", "NONE")) {
         close(serial_file);
         free(css);
         redisFree(context);
