@@ -82,6 +82,7 @@ void activate(GtkApplication *app, gpointer data)
   /*
   gtk_window_fullscreen(GTK_WINDOW(window)); TODO: restore fullscreen once testing is done
    */
+  g_thread_new("HatThread", (GThreadFunc) hat, NULL);
   g_thread_new("PersonnelSenderThread", (GThreadFunc) personnel_sender, NULL);
   g_thread_new("StatusSenderThread", (GThreadFunc) status_sender, NULL);
   g_thread_new("ShutdownWatcherThread", (GThreadFunc) shutdown_watcher, NULL);

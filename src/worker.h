@@ -10,6 +10,14 @@
 #include <gtk/gtk.h>
 
 /**
+ * hat:
+ *
+ * A worker thread for dropping incoming calls, querying location, processing
+ * received SMS, and sending queued SMS.
+ */
+void hat();
+
+/**
  * personnel_sender:
  *
  * A separate thread for watching the operator and supervisor keys. If there

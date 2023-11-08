@@ -209,6 +209,8 @@ void at_cmd(const char    *cmd,
             char         **response,
             unsigned int   timeout)
 {
+  static GMutex mutex;
+  g_mutex_lock(&mutex);
   char *at_command;
   char at_response[1024];
   int serial_file = -1;
@@ -224,18 +226,18 @@ void at_cmd(const char    *cmd,
   }
   strcpy(at_command, cmd);
   strcat(at_command, "\r\n");
-  static GMutex mutex;
-  g_mutex_lock(&mutex);
   write(serial_file, at_command, strlen(at_command));
   sleep(timeout);
-  ssize_t num_bytes = read(serial_file, at_response, sizeof(at_response));
-  if (num_bytes > 0)
-    at_response[num_bytes] = '\0';
-  g_mutex_unlock(&mutex);
+  if (g_strcmp0(cmd, "ATH") != 0) {
+    ssize_t num_bytes = read(serial_file, at_response, sizeof(at_response));
+    if (num_bytes > 0)
+      at_response[num_bytes] = '\0';
+    g_free(*response);
+    *response = (char *) g_malloc(strlen(at_response) * sizeof(char));
+    strcpy(*response, at_response);
+  }
   g_free(at_command);
-  g_free(*response);
-  *response = (char *) g_malloc(strlen(at_response) * sizeof(char));
-  strcpy(*response, at_response);
+  g_mutex_unlock(&mutex);
   return;
 }
 
