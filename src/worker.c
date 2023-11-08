@@ -10,20 +10,14 @@
 void hat()
 {
   char *response = NULL;
-  char serial_buffer[1024];
   int serial_file = -1;
   int shutdown = 0;
   while (serial_file < 0)
     get_int_key("serial_file", &serial_file);
+  at_cmd("AT+GSMBUSY=1", &response, 1);
   while (shutdown == 0) {
     sleep(1);
     get_int_key("shutdown", &shutdown);
-    read(serial_file, serial_buffer, sizeof(serial_buffer));
-    if (strstr(serial_buffer, "RING") != NULL) {
-      at_cmd("ATH", &response, 1);
-      g_free(response);
-      continue;
-    }
     // TODO: gnss query
     // TODO: queued SMS sending
     // TODO: read incmoming SMS (single part, multi-part)

@@ -228,14 +228,12 @@ void at_cmd(const char    *cmd,
   strcat(at_command, "\r\n");
   write(serial_file, at_command, strlen(at_command));
   sleep(timeout);
-  if (g_strcmp0(cmd, "ATH") != 0) {
-    ssize_t num_bytes = read(serial_file, at_response, sizeof(at_response));
-    if (num_bytes > 0)
-      at_response[num_bytes] = '\0';
-    g_free(*response);
-    *response = (char *) g_malloc(strlen(at_response) * sizeof(char));
-    strcpy(*response, at_response);
-  }
+  ssize_t num_bytes = read(serial_file, at_response, sizeof(at_response));
+  if (num_bytes > 0)
+    at_response[num_bytes] = '\0';
+  g_free(*response);
+  *response = (char *) g_malloc(strlen(at_response) * sizeof(char));
+  strcpy(*response, at_response);
   g_free(at_command);
   g_mutex_unlock(&mutex);
   return;
