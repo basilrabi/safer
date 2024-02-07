@@ -95,8 +95,7 @@ void shutdown_trigger()
       if (serial_file < 0)
         continue;
       close(serial_file);
-      // TODO: switch to actual shutdown once testing is done
-      system("sudo reboot");
+      system("sudo /usr/local/bin/x708-softsd.sh");
     }
   }
 }
