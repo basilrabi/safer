@@ -11,6 +11,9 @@
 7. python3-hiredis
 8. python3-redis
 
+The user must be a member of the group `gpio`:
+`sudo adduser $USER gpio`
+
 ## Installing
 
 ### Building
@@ -18,7 +21,9 @@
 meson setup builddir
 cd builddir
 ninja cppcheck # optional
-ninja install
+sudo ninja install
+sudo chmod 4755 ~/bin/hat.py
+sudo chmod 4755 ~/bin/safer
 ```
 
 ### Running
@@ -44,7 +49,7 @@ The program can be run using the command `gui`.
 
 #### Waveshare GNSS/GSM HAT
 
-##### AT Commands 
+##### AT Commands
 
 - `AT` - Checks if HAT status is `OK`
 - `AT+CPIN?` - Check if the SIM card is `READY`
@@ -52,7 +57,7 @@ The program can be run using the command `gui`.
 ###### Clock
 
 - `AT+CCLK?` - Gets the present time.
-- `AT+CCLK="23/10/24,21:18:30+32"` - Sets the clock to `2023-10-24 21:18:30+8` 
+- `AT+CCLK="23/10/24,21:18:30+32"` - Sets the clock to `2023-10-24 21:18:30+8`
 
 ###### GNSS
 
