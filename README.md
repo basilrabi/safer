@@ -24,6 +24,8 @@ ninja cppcheck # optional
 sudo ninja install
 sudo chmod 4755 ~/bin/hat.py
 sudo chmod 4755 ~/bin/safer
+sudo systemctl daemon-reload
+sudo systemctl enable --now x708-pwr
 ```
 
 ### Running
