@@ -8,7 +8,6 @@ systemd_dep = dependency('libsystemd', required: true)
 
 cmd = run_command('bash', '-c', 'echo $HOME', check: false)
 home_dir = cmd.stdout().strip()
-root_bin = '/usr/local/bin'
 
 executable(
   'safer',
@@ -27,11 +26,10 @@ executable(
   install: true,
   install_dir: home_dir / 'bin'
 )
+install_data('python/bat.py', install_dir: home_dir / 'bin')
+install_data('python/bat.service', install_dir: home_dir / '.config/systemd/user')
 install_data('python/hat.py', install_dir: home_dir / 'bin')
 install_data('theme.css', install_dir: home_dir)
-install_data('x708/x708-pwr.service', install_dir: '/lib/systemd/system')
-install_data('x708/x708-pwr.sh', install_dir: root_bin)
-install_data('x708/x708-softsd.sh', install_dir: root_bin)
 
 run_target(
   'cppcheck',
@@ -43,3 +41,4 @@ run_target(
     'compile_commands.json')
   ]
 )
+

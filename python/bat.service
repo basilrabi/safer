@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Battery Monitor
+
+[Service]
+Type=simple
+ExecStart=/home/datamanagement/bin/bat.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+

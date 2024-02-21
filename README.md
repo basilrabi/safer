@@ -16,16 +16,18 @@ The user must be a member of the group `gpio`:
 
 ## Installing
 
+### x708 UPS
+
+To install the x708 UPS HAT, run x708/install.sh as root first.
+
 ### Building
 ```
 meson setup builddir
 cd builddir
 ninja cppcheck # optional
-sudo ninja install
-sudo chmod 4755 ~/bin/hat.py
-sudo chmod 4755 ~/bin/safer
-sudo systemctl daemon-reload
-sudo systemctl enable --now x708-pwr
+ninja install
+systemctl --user daemon-reload
+systemctl --user enable --now bat.service
 ```
 
 ### Running
@@ -88,3 +90,4 @@ cmd('AT+CCLK="23/11/03,13:50:30+32"')
 
 ser.close()
 ```
+
