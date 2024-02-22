@@ -169,38 +169,19 @@ int send_equipment_status(redisContext *context)
   return output;
 }
 
-int set_system_time(void)
+int set_hat_time(void)
 {
   char *rtc = NULL;
-  at_cmd("AT+CCLK?", &rtc, 1);
-  const char *success = strstr(rtc, "OK");
+  char time_buffer[32];
   int out = 0;
-  if (success) {
-    char c_year[3];
-    char c_month[3];
-    char c_day[3];
-    char c_time[9];
-    char cmd[57];
-    const char *pre_cmd = "sudo timedatectl set-time";
-    int year = 2000;
-    str_sub(c_year, rtc, 19, 20);
-    str_sub(c_month, rtc, 22, 23);
-    str_sub(c_day, rtc, 25, 26);
-    str_sub(c_time, rtc, 28, 35);
-    year += atoi(c_year);
-    sprintf(cmd, "%s \"%i-%s-%s %s\"", pre_cmd, year, c_month, c_day, c_time);
-    system(cmd);
-    // Increase by 1 second due to AT timeout.
-    time_t current_time;
-    time(&current_time);
-    current_time += 1;
-    struct tm *new_time = localtime(&current_time);
-    char time_string[20];
-    strftime(time_string, sizeof(time_string), "%Y-%m-%d %H:%M:%S", new_time);
-    sprintf(cmd, "%s \"%s\"",pre_cmd, time_string);
-    system(cmd);
+  time_t current_time;
+  time(&current_time);
+  struct tm *time_print = localtime(&current_time);
+  strftime(time_buffer, sizeof(time_buffer), "AT+CCLK=\"%y/%m/%d,%H:%M:%S+32\"", time_print);
+  at_cmd(time_buffer, &rtc, 1);
+  const char *success = strstr(rtc, "OK");
+  if (success)
     out = 1;
-  }
   g_free(rtc);
   return out;
 }

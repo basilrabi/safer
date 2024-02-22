@@ -39,6 +39,9 @@ while True:
     r.set('battery', f'{readCapacity(bus)}')
     if GPIO.input(6):
         r.set('pre_shutdown', '1')
+        t = time.localtime()
+        current_time = time.strftime('%Y-%m-%d-%H:%M:%S', t)
+        r.set('pre_shutdown_time', current_time)
     else:
         r.set('pre_shutdown', '0')
     time.sleep(2)

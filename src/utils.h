@@ -56,16 +56,16 @@ int redis_cmd(const char *cmd,
 int send_equipment_status(redisContext *context);
 
 /**
- * set_system_time:
+ * set_hat_time:
  *
- * This will synchronize the system using the real-time clock.
+ * This will synchronize the time on the GNSS HAT with the system time.
  *
  * Returns: 1 if success
  *          0 if fail
  */
-int set_system_time(void);
+int set_hat_time(void);
 
-/*
+/**
  * at_cmd:
  * @cmd: AT command to run
  * @reponse: the returned response of the AT command

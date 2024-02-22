@@ -79,12 +79,11 @@ void activate(GtkApplication *app, gpointer data)
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(buttonWarmup), TRUE);
   gtk_container_set_border_width(GTK_CONTAINER(boxActivity), 5);
   gtk_widget_show_all(window);
-  /*
-  gtk_window_fullscreen(GTK_WINDOW(window)); TODO: restore fullscreen once testing is done
-   */
+  gtk_window_fullscreen(GTK_WINDOW(window));
   g_thread_new("HatThread", (GThreadFunc) hat, NULL);
   g_thread_new("PersonnelSenderThread", (GThreadFunc) personnel_sender, NULL);
   g_thread_new("StatusSenderThread", (GThreadFunc) status_sender, NULL);
   g_thread_new("ShutdownWatcherThread", (GThreadFunc) shutdown_watcher, NULL);
   g_thread_new("ShutdownTriggerThread", (GThreadFunc) shutdown_trigger, NULL);
 }
+
