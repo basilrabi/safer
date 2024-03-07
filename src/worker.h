@@ -7,7 +7,7 @@
 #ifndef WORKER_H
 #define WORKER_H
 
-#include <gtk/gtk.h>
+#include <glib.h>
 
 /**
  * hat:
@@ -24,6 +24,13 @@ void hat();
  * is an update in these keys, send an SMS.
  */
 void personnel_sender();
+
+/**
+ * power_monitor:
+ *
+ * A thread for regulary querying the power statistics.
+ */
+void power_monitor(gpointer data);
 
 /**
  * shutdown_trigger:

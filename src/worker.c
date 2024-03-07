@@ -1,5 +1,5 @@
 #define _GNU_SOURCE
-#include <glib.h>
+
 #include <hiredis/hiredis.h>
 #include <stdio.h>
 #include <systemd/sd-journal.h>
@@ -68,6 +68,11 @@ void personnel_sender()
       }
     }
   }
+}
+
+void power_monitor(gpointer data)
+{
+  power_stat *powerStatus = (power_stat *) data;
 }
 
 void shutdown_trigger()

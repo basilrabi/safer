@@ -8,9 +8,12 @@ void activate(GtkApplication *app, gpointer data)
   pset *pointer_set = (pset *) data;
   GtkCssProvider *cssProvider;
   GtkWidget *boxActivity = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+  GtkWidget *boxBrightness = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   GtkWidget *boxPersonnel = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   GtkWidget *boxPersonnelOperator = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   GtkWidget *boxPersonnelSupervisor = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+  GtkWidget *boxSettings = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+  GtkWidget *boxLabelBrightness = gtk_label_new("Brightness");
   GtkWidget *boxLabelOperator = gtk_label_new("Operator");
   GtkWidget *boxLabelSupervisor = gtk_label_new("Supervisor");
   GtkWidget *buttonIdling = gtk_radio_button_new_with_label(NULL, "Idling");
@@ -22,10 +25,19 @@ void activate(GtkApplication *app, gpointer data)
   GtkWidget *comboBoxOperator = gtk_combo_box_text_new();
   GtkWidget *comboBoxSupervisor = gtk_combo_box_text_new();
   GtkWidget *notebook = gtk_notebook_new();
+  GtkWidget *labelBattery = gtk_label_new("Battery");
+  GtkWidget *labelVoltage = gtk_label_new("Voltage");
+  GtkWidget *sliderBrightness = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0, 100, 5);
   GtkWidget *tabLabelActivity = gtk_label_new("Activity");
   GtkWidget *tabLabelPersonnel = gtk_label_new("Personnel");
+  GtkWidget *tabLabelSettings = gtk_label_new("Settings");
+  GtkWidget *tablePower = gtk_grid_new();
   GtkWidget *window = gtk_application_window_new(app);
   guint boxPacking = 0;
+
+  power_stat powerStatus;
+  powerStatus.battery = gtk_label_new("---%");
+  powerStatus.voltage = gtk_label_new("---V");
 
   populate_comboboxtext(GTK_COMBO_BOX_TEXT(comboBoxOperator), "operators", pointer_set->context);
   populate_comboboxtext(GTK_COMBO_BOX_TEXT(comboBoxSupervisor), "supervisors", pointer_set->context);
@@ -47,6 +59,20 @@ void activate(GtkApplication *app, gpointer data)
   buttonRefuelling = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(buttonIdling), "Refueling");
   buttonTravel = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(buttonIdling), "Traveling/Repositioning");
   buttonWarmup = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(buttonIdling), "Warm-up/Cooling");
+
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), boxSettings, tabLabelSettings);
+
+  gtk_box_pack_start(GTK_BOX(boxSettings), boxBrightness, TRUE, TRUE, boxPacking);
+  gtk_box_pack_start(GTK_BOX(boxBrightness), boxLabelBrightness, FALSE, FALSE, boxPacking);
+  gtk_box_pack_start(GTK_BOX(boxBrightness), sliderBrightness, TRUE, TRUE, boxPacking);
+
+  gtk_box_pack_start(GTK_BOX(boxSettings), tablePower, TRUE, TRUE, boxPacking + 5);
+  gtk_grid_set_column_homogeneous(GTK_GRID(tablePower), TRUE);
+  gtk_grid_set_row_homogeneous(GTK_GRID(tablePower), TRUE);
+  gtk_grid_attach(GTK_GRID(tablePower), labelBattery, 0, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(tablePower), labelVoltage, 0, 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(tablePower), powerStatus.battery, 1, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(tablePower), powerStatus.voltage, 1, 1, 1, 1);
 
   cssProvider = gtk_css_provider_new();
   gtk_css_provider_load_from_path(cssProvider, pointer_set->css, NULL);
@@ -82,6 +108,7 @@ void activate(GtkApplication *app, gpointer data)
   gtk_window_fullscreen(GTK_WINDOW(window));
   g_thread_new("HatThread", (GThreadFunc) hat, NULL);
   g_thread_new("PersonnelSenderThread", (GThreadFunc) personnel_sender, NULL);
+  g_thread_new("PowerMonitorThread", (GThreadFunc) power_monitor, &powerStatus);
   g_thread_new("StatusSenderThread", (GThreadFunc) status_sender, NULL);
   g_thread_new("ShutdownWatcherThread", (GThreadFunc) shutdown_watcher, NULL);
   g_thread_new("ShutdownTriggerThread", (GThreadFunc) shutdown_trigger, NULL);

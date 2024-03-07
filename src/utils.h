@@ -1,7 +1,13 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <gtk/gtk.h>
 #include <hiredis/hiredis.h>
+
+typedef struct power_stat {
+  GtkWidget *battery;
+  GtkWidget *voltage;
+} power_stat;
 
 typedef struct pset {
   redisContext *context;
