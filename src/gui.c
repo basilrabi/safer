@@ -27,6 +27,8 @@ void activate(GtkApplication *app, gpointer data)
   GtkWidget *notebook = gtk_notebook_new();
   GtkWidget *labelBattery = gtk_label_new("Battery");
   GtkWidget *labelVoltage = gtk_label_new("Voltage");
+  GtkWidget *levelBattery = gtk_label_new("---%");
+  GtkWidget *levelVoltage = gtk_label_new("---V");
   GtkWidget *sliderBrightness = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0, 100, 5);
   GtkWidget *tabLabelActivity = gtk_label_new("Activity");
   GtkWidget *tabLabelPersonnel = gtk_label_new("Personnel");
@@ -35,9 +37,12 @@ void activate(GtkApplication *app, gpointer data)
   GtkWidget *window = gtk_application_window_new(app);
   guint boxPacking = 0;
 
-  power_stat powerStatus;
-  powerStatus.battery = gtk_label_new("---%");
-  powerStatus.voltage = gtk_label_new("---V");
+  power_stat powerStatus = {
+    .mutex = G_MUTEX_INIT,
+    .battery = NULL,
+    .voltage = NULL,
+  };
+  g_mutex_init(&powerStatus.mutex);
 
   populate_comboboxtext(GTK_COMBO_BOX_TEXT(comboBoxOperator), "operators", pointer_set->context);
   populate_comboboxtext(GTK_COMBO_BOX_TEXT(comboBoxSupervisor), "supervisors", pointer_set->context);
@@ -71,8 +76,8 @@ void activate(GtkApplication *app, gpointer data)
   gtk_grid_set_row_homogeneous(GTK_GRID(tablePower), TRUE);
   gtk_grid_attach(GTK_GRID(tablePower), labelBattery, 0, 0, 1, 1);
   gtk_grid_attach(GTK_GRID(tablePower), labelVoltage, 0, 1, 1, 1);
-  gtk_grid_attach(GTK_GRID(tablePower), powerStatus.battery, 1, 0, 1, 1);
-  gtk_grid_attach(GTK_GRID(tablePower), powerStatus.voltage, 1, 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(tablePower), levelBattery, 1, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(tablePower), levelVoltage, 1, 1, 1, 1);
 
   cssProvider = gtk_css_provider_new();
   gtk_css_provider_load_from_path(cssProvider, pointer_set->css, NULL);

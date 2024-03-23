@@ -38,5 +38,14 @@ void toggle_personnel(GtkWidget *box,
 void toggle_status(GtkWidget *button,
                    gpointer   data);
 
+/**
+ * update_battery:
+ * @label:
+ * @data: a label_set
+ *
+ * Update the string of a GtkLabe.
+ */
+void update_label(gpointer data);
+
 #endif // GUI_FUNCTIONS_H
 
