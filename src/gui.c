@@ -93,6 +93,8 @@ void activate(GtkApplication *app, gpointer data)
   gtk_box_pack_start(GTK_BOX(boxActivity), buttonIdling, TRUE, TRUE, boxPacking);
   gtk_box_pack_start(GTK_BOX(boxActivity), buttonWarmup, TRUE, TRUE, boxPacking);
 
+  gtk_range_set_value(GTK_RANGE(sliderBrightness), 50);
+
   g_signal_connect(buttonIdling, "clicked", G_CALLBACK(toggle_status), pointer_set->context);
   g_signal_connect(buttonProduction, "clicked", G_CALLBACK(toggle_status), pointer_set->context);
   g_signal_connect(buttonQueu, "clicked", G_CALLBACK(toggle_status), pointer_set->context);
@@ -103,6 +105,7 @@ void activate(GtkApplication *app, gpointer data)
   g_signal_connect(comboBoxSupervisor, "changed", G_CALLBACK(toggle_personnel), NULL);
   g_signal_connect(powerStatus, "battery_level_changed", G_CALLBACK(update_battery), levelBattery);
   g_signal_connect(powerStatus, "voltage_level_changed", G_CALLBACK(update_voltage), levelVoltage);
+  g_signal_connect(sliderBrightness, "value-changed", G_CALLBACK(adjust_brightness), NULL);
 
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(buttonWarmup), TRUE);
   gtk_container_set_border_width(GTK_CONTAINER(boxActivity), 5);

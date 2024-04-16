@@ -1,6 +1,29 @@
+#define _GNU_SOURCE
+
+#include <math.h>
+#include <stdio.h>
 #include <systemd/sd-journal.h>
 #include "gui_functions.h"
 #include "utils.h"
+
+void adjust_brightness(GtkWidget *slider,
+                       gpointer   data)
+{
+  char *cmd;
+  char *device = "10-0045";
+  int min = 15;
+  int max = 255;
+  double range = max - min;
+  double value = gtk_range_get_value(GTK_RANGE(slider));
+  double relative_brightness = range * value / 100;
+  double brightness = min + relative_brightness;
+  int brightness_level = round(brightness);
+  if (asprintf(&cmd, "sudo sh -c 'echo \"%d\" > /sys/class/backlight/%s/brightness'", brightness_level, device) != -1) {
+    system(cmd);
+    free(cmd);
+  }
+  return;
+}
 
 void populate_comboboxtext(GtkComboBoxText *box,
                            const char      *list,
@@ -16,6 +39,7 @@ void populate_comboboxtext(GtkComboBoxText *box,
     }
     freeReplyObject(personnel_list);
   }
+  return;
 }
 
 void toggle_personnel(GtkWidget *box,

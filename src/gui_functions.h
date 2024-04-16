@@ -6,6 +6,18 @@
 #include "power-monitor.h"
 
 /**
+ * adjust_brightness:
+ * @slider: a GtkScale
+ * @data: placeholder
+ *
+ * Adjust the brightness of the screen.
+ * @box.
+ **/
+void adjust_brightness(GtkWidget *slider,
+                       gpointer   data);
+
+
+/**
  * populate_comboboxtext:
  * @box: a GtkComboBoxText
  * @list: the name of the list inside redis that will populate @box
