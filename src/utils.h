@@ -5,8 +5,9 @@
 #include <hiredis/hiredis.h>
 
 typedef struct power_stat {
-  GtkWidget *battery;
-  GtkWidget *voltage;
+  GMutex mutex;
+  char *battery;
+  char *voltage;
 } power_stat;
 
 typedef struct pset {

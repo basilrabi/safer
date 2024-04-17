@@ -1,5 +1,6 @@
 project('data_management_equipment_utilization_capture', 'c', version: '0.1.0')
 
+glib_dep = dependency('glib-2.0', required: true)
 gtk_dep = dependency('gtk+-3.0', required: true)
 hiredis_dep = dependency('hiredis', required: true)
 pcre_dep = dependency('libpcre2-8', required: true)
@@ -17,12 +18,14 @@ executable(
     'src/gui_functions.c',
     'src/gui_functions.h',
     'src/main.c',
+    'src/power-monitor.c',
+    'src/power-monitor.h',
     'src/utils.h',
     'src/utils.c',
     'src/worker.h',
     'src/worker.c'
   ],
-  dependencies : [gtk_dep, hiredis_dep, pcre_dep, python_dep, systemd_dep],
+  dependencies : [glib_dep, gtk_dep, hiredis_dep, pcre_dep, python_dep, systemd_dep],
   install: true,
   install_dir: home_dir / 'bin'
 )

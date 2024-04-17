@@ -3,6 +3,7 @@
 
 #include <gtk/gtk.h>
 #include <hiredis/hiredis.h>
+#include "power-monitor.h"
 
 /**
  * populate_comboboxtext:
@@ -37,6 +38,24 @@ void toggle_personnel(GtkWidget *box,
  */
 void toggle_status(GtkWidget *button,
                    gpointer   data);
+
+/**
+ * update_battery:
+ * @data: the GtkLabel for battery
+ *
+ * Update the string of the battery label.
+ */
+void update_battery(PowerMonitor *monitor,
+		    gpointer      data);
+
+/**
+ * update_voltage:
+ * @data: the GtkLabel for voltage
+ *
+ * Update the string of the voltage label.
+ */
+void update_voltage(PowerMonitor *monitor,
+		    gpointer      data);
 
 #endif // GUI_FUNCTIONS_H
 

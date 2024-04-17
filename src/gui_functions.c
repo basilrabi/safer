@@ -61,3 +61,27 @@ void toggle_status(GtkWidget *button,
   }
 }
 
+void update_battery(PowerMonitor *monitor,
+                    gpointer      data)
+{
+  GtkWidget *label = (GtkWidget *) data;
+  char *buffer = NULL;
+  if (get_char_key("battery", &buffer)) {
+    gtk_label_set_text(GTK_LABEL(label), buffer);
+  }
+  g_free(buffer);
+  return;
+}
+
+void update_voltage(PowerMonitor *monitor,
+                    gpointer      data)
+{
+  GtkWidget *label = (GtkWidget *) data;
+  char *buffer = NULL;
+  if (get_char_key("voltage", &buffer)) {
+    gtk_label_set_text(GTK_LABEL(label), buffer);
+  }
+  g_free(buffer);
+  return;
+}
+

@@ -1,5 +1,6 @@
 #include "gui.h"
 #include "gui_functions.h"
+#include "power-monitor.h"
 #include "utils.h"
 #include "worker.h"
 
@@ -27,6 +28,8 @@ void activate(GtkApplication *app, gpointer data)
   GtkWidget *notebook = gtk_notebook_new();
   GtkWidget *labelBattery = gtk_label_new("Battery");
   GtkWidget *labelVoltage = gtk_label_new("Voltage");
+  GtkWidget *levelBattery = gtk_label_new("---%");
+  GtkWidget *levelVoltage = gtk_label_new("---V");
   GtkWidget *sliderBrightness = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL, 0, 100, 5);
   GtkWidget *tabLabelActivity = gtk_label_new("Activity");
   GtkWidget *tabLabelPersonnel = gtk_label_new("Personnel");
@@ -34,10 +37,7 @@ void activate(GtkApplication *app, gpointer data)
   GtkWidget *tablePower = gtk_grid_new();
   GtkWidget *window = gtk_application_window_new(app);
   guint boxPacking = 0;
-
-  power_stat powerStatus;
-  powerStatus.battery = gtk_label_new("---%");
-  powerStatus.voltage = gtk_label_new("---V");
+  PowerMonitor *powerStatus = g_object_new(POWER_MONITOR_TYPE, NULL);
 
   populate_comboboxtext(GTK_COMBO_BOX_TEXT(comboBoxOperator), "operators", pointer_set->context);
   populate_comboboxtext(GTK_COMBO_BOX_TEXT(comboBoxSupervisor), "supervisors", pointer_set->context);
@@ -71,8 +71,8 @@ void activate(GtkApplication *app, gpointer data)
   gtk_grid_set_row_homogeneous(GTK_GRID(tablePower), TRUE);
   gtk_grid_attach(GTK_GRID(tablePower), labelBattery, 0, 0, 1, 1);
   gtk_grid_attach(GTK_GRID(tablePower), labelVoltage, 0, 1, 1, 1);
-  gtk_grid_attach(GTK_GRID(tablePower), powerStatus.battery, 1, 0, 1, 1);
-  gtk_grid_attach(GTK_GRID(tablePower), powerStatus.voltage, 1, 1, 1, 1);
+  gtk_grid_attach(GTK_GRID(tablePower), levelBattery, 1, 0, 1, 1);
+  gtk_grid_attach(GTK_GRID(tablePower), levelVoltage, 1, 1, 1, 1);
 
   cssProvider = gtk_css_provider_new();
   gtk_css_provider_load_from_path(cssProvider, pointer_set->css, NULL);
@@ -101,6 +101,8 @@ void activate(GtkApplication *app, gpointer data)
   g_signal_connect(buttonWarmup, "clicked", G_CALLBACK(toggle_status), pointer_set->context);
   g_signal_connect(comboBoxOperator, "changed", G_CALLBACK(toggle_personnel), NULL);
   g_signal_connect(comboBoxSupervisor, "changed", G_CALLBACK(toggle_personnel), NULL);
+  g_signal_connect(powerStatus, "battery_level_changed", G_CALLBACK(update_battery), levelBattery);
+  g_signal_connect(powerStatus, "voltage_level_changed", G_CALLBACK(update_voltage), levelVoltage);
 
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(buttonWarmup), TRUE);
   gtk_container_set_border_width(GTK_CONTAINER(boxActivity), 5);
@@ -108,7 +110,7 @@ void activate(GtkApplication *app, gpointer data)
   gtk_window_fullscreen(GTK_WINDOW(window));
   g_thread_new("HatThread", (GThreadFunc) hat, NULL);
   g_thread_new("PersonnelSenderThread", (GThreadFunc) personnel_sender, NULL);
-  g_thread_new("PowerMonitorThread", (GThreadFunc) power_monitor, &powerStatus);
+  g_thread_new("PowerMonitorThread", (GThreadFunc) power_monitor, powerStatus);
   g_thread_new("StatusSenderThread", (GThreadFunc) status_sender, NULL);
   g_thread_new("ShutdownWatcherThread", (GThreadFunc) shutdown_watcher, NULL);
   g_thread_new("ShutdownTriggerThread", (GThreadFunc) shutdown_trigger, NULL);

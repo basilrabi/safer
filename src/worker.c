@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <systemd/sd-journal.h>
 #include <time.h>
+#include "power-monitor.h"
 #include "worker.h"
 #include "utils.h"
 
@@ -72,7 +73,25 @@ void personnel_sender()
 
 void power_monitor(gpointer data)
 {
-  power_stat *powerStatus = (power_stat *) data;
+  char *current_battery = NULL;
+  char *current_voltage = NULL;
+  char *previous_battery = NULL;
+  char *previous_voltage = NULL;
+  PowerMonitor *powerStatus = (PowerMonitor *) data;
+  while (1) {
+    sleep(2);
+    if (!get_char_key("battery", &current_battery) || !get_char_key("voltage", &current_voltage)) {
+      continue;
+    }
+    if (g_strcmp0(current_battery, previous_battery) != 0) {
+      str_copy(&previous_battery, current_battery);
+      power_monitor_emit_battery_level_changed(powerStatus);
+    }
+    if (g_strcmp0(current_voltage, previous_voltage) != 0) {
+      str_copy(&previous_voltage, current_voltage);
+      power_monitor_emit_voltage_level_changed(powerStatus);
+    }
+  }
 }
 
 void shutdown_trigger()
