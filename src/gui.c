@@ -7,6 +7,7 @@
 void activate(GtkApplication *app, gpointer data)
 {
   char *response = NULL;
+  char *success = NULL;
   pset *pointer_set = (pset *) data;
   GtkCssProvider *cssProvider;
   GtkWidget *boxActivity = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
@@ -113,8 +114,19 @@ void activate(GtkApplication *app, gpointer data)
   gtk_widget_show_all(window);
   gtk_window_fullscreen(GTK_WINDOW(window));
 
-  at_cmd("AT+CMGF=1", &response, 1);
-  at_cmd("AT+CSCA=\"+639180000101\"", &response, 1);
+  while (success == NULL) {
+    at_cmd("AT+CMGF=1", &response, 1);
+    success = strstr(response, "OK");
+    if (success == NULL)
+      printf("Trying to set text mode for SMS again.\n");
+  }
+  success = NULL;
+  while (success == NULL) {
+    at_cmd("AT+CSCA=\"+639180000101\"", &response, 1);
+    success = strstr(response, "OK");
+    if (success == NULL)
+      printf("Trying to set service center number again.\n");
+  }
 
   g_thread_new("HatThread", (GThreadFunc) hat, NULL);
   g_thread_new("PersonnelSenderThread", (GThreadFunc) personnel_sender, NULL);

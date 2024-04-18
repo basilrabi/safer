@@ -303,7 +303,9 @@ void send_sms(const char *format,
               ...)
 {
   const char ctr_z = '\x1A';
+  char *success = NULL;
   int serial_file = -1;
+  int timeout = 1;
   while (serial_file < 0 )
     get_int_key("serial_file", &serial_file);
   char *response = NULL;
@@ -322,10 +324,17 @@ void send_sms(const char *format,
     printf("Text too long with length: %i.\n", (int) strlen(text));
   }
   else {
-    sleep(1);
-    at_cmd("AT+CMGS=\"+639288984366\"", &response, 1);
+    while (success == NULL) {
+      at_cmd("AT+CMGS=\"+639288984366\"", &response, timeout);
+      success = strstr(response, ">");
+      if (success == NULL) {
+        printf("Increase timeout: %i in sending text.\n", timeout);
+        timeout = timeout + 1;
+      }
+    }
     write_serial(text, serial_file);
     write_serial(&ctr_z, serial_file);
+    sleep(timeout);
   }
   g_free(text);
   return;

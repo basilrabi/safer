@@ -11,11 +11,17 @@
 void hat()
 {
   char *response = NULL;
+  char *success = NULL;
   int serial_file = -1;
   int shutdown = 0;
   while (serial_file < 0)
     get_int_key("serial_file", &serial_file);
-  at_cmd("AT+GSMBUSY=1", &response, 1);
+  while (success == NULL) {
+    at_cmd("AT+GSMBUSY=1", &response, 1);
+    success = strstr(response, "OK");
+    if (success == NULL)
+      printf("Trying to set GSM to busy again.\n");
+  }
   while (shutdown == 0) {
     sleep(1);
     get_int_key("shutdown", &shutdown);
