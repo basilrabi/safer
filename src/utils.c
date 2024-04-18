@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include "utils.h"
 
+static GMutex mutex;
+
 int get_char_key(const char  *key,
                  char       **value)
 {
@@ -153,7 +155,7 @@ int send_equipment_status(redisContext *context)
         strcpy(captured_datetime, new_captured_datetime);
         strcpy(captured_equipment_status, new_captured_equipment_status);
       }
-      send_sms("All messages:");
+      // send_sms("All messages:");
       // TODO: return the status of sending messages and delete cache if sending
       // is success.
       send_sms(messages);
@@ -190,7 +192,6 @@ void at_cmd(const char    *cmd,
             char         **response,
             unsigned int   timeout)
 {
-  static GMutex mutex;
   g_mutex_lock(&mutex);
   char *at_command;
   char at_response[1024];
@@ -301,6 +302,11 @@ void initialize_serial_connection(int *serial_file_descriptor)
 void send_sms(const char *format,
               ...)
 {
+  const char ctr_z = '\x1A';
+  int serial_file = -1;
+  while (serial_file < 0 )
+    get_int_key("serial_file", &serial_file);
+  char *response = NULL;
   va_list args;
   va_start(args, format);
   int len = vsnprintf(NULL, 0, format, args) + 1;
@@ -311,6 +317,16 @@ void send_sms(const char *format,
   va_end(args);
   // TODO: send actual SMS
   printf("%s\n", text);
+  if (strlen(text)> 159) {
+    sd_journal_send("MESSAGE=%s", "Unsupported SMS length.", "PRIORITY=%i", LOG_ERR, NULL);
+    printf("Text too long with length: %i.\n", (int) strlen(text));
+  }
+  else {
+    sleep(1);
+    at_cmd("AT+CMGS=\"+639288984366\"", &response, 1);
+    write_serial(text, serial_file);
+    write_serial(&ctr_z, serial_file);
+  }
   g_free(text);
   return;
 }
@@ -344,14 +360,12 @@ void str_difference(const char *old,
   return;
 }
 
-void str_sub(char       *destination,
-             const char *source,
-             const int   start,
-             const int   end)
+void write_serial(const char *buffer,
+                  const int   serial_file)
 {
-  int i, j = 0;
-  for (i = start; i <= end; ++i)
-    destination[j++] = source[i];
-  destination[j] = '\0';
+  g_mutex_lock(&mutex);
+  write(serial_file, buffer, strlen(buffer));
+  g_mutex_unlock(&mutex);
   return;
 }
+

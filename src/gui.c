@@ -6,6 +6,7 @@
 
 void activate(GtkApplication *app, gpointer data)
 {
+  char *response = NULL;
   pset *pointer_set = (pset *) data;
   GtkCssProvider *cssProvider;
   GtkWidget *boxActivity = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
@@ -111,6 +112,10 @@ void activate(GtkApplication *app, gpointer data)
   gtk_container_set_border_width(GTK_CONTAINER(boxActivity), 5);
   gtk_widget_show_all(window);
   gtk_window_fullscreen(GTK_WINDOW(window));
+
+  at_cmd("AT+CMGF=1", &response, 1);
+  at_cmd("AT+CSCA=\"+639180000101\"", &response, 1);
+
   g_thread_new("HatThread", (GThreadFunc) hat, NULL);
   g_thread_new("PersonnelSenderThread", (GThreadFunc) personnel_sender, NULL);
   g_thread_new("PowerMonitorThread", (GThreadFunc) power_monitor, powerStatus);

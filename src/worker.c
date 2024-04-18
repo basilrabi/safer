@@ -20,7 +20,6 @@ void hat()
     sleep(1);
     get_int_key("shutdown", &shutdown);
     // TODO: gnss query
-    // TODO: queued SMS sending
     // TODO: read incmoming SMS (single part, multi-part)
   }
   return;
@@ -183,7 +182,7 @@ void status_sender()
   }
 
   // Number of messages to be queued before sending
-  const int message_limit = 10;
+  const int message_limit = 6;
   // Number of seconds before the new equipment status is recorded to allow making mistakes
   const int seconds_refresh_cutoff = 5;
   // Number of seconds between location queries

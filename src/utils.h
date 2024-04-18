@@ -143,18 +143,14 @@ void str_difference(const char *old_string,
                     char       *holder);
 
 /**
- * str_sub:
- * @destination: the substring to be saved
- * @source: a string
- * @start: start index of the substring in @source
- * @end: end index of the substring in @source
+ * write_serial:
+ * @buffer: the string to be written
+ * @serial_file: the serial file to write on to
  *
- * Gets a substring of @source and save it to @destination.
+ * Writes a string to the modem's serial connection.
  */
-void str_sub(char       *destination,
-             const char *source,
-             const int   start,
-             const int   end);
+void write_serial(const char *buffer,
+		  const int   serial_file);
 
 #endif // UTILS_H
 
