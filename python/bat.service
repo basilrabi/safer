@@ -3,7 +3,7 @@ Description=Run Battery Monitor
 
 [Service]
 Type=simple
-ExecStart=/home/datamanagement/bin/bat.py
+ExecStart=$HOME/bin/bat.py
 Restart=always
 RestartSec=5
 

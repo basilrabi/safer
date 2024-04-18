@@ -31,8 +31,10 @@ executable(
   install: true,
   install_dir: home_dir / 'bin'
 )
+
+script_path = meson.source_root() / 'install_service.sh'
+run_command(script_path, check: false)
 install_data('python/bat.py', install_dir: home_dir / 'bin')
-install_data('python/bat.service', install_dir: home_dir / '.config/systemd/user')
 install_data('python/hat.py', install_dir: home_dir / 'bin')
 install_data('theme.css', install_dir: home_dir)
 
