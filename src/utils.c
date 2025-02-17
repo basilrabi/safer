@@ -193,8 +193,8 @@ void at_cmd(const char    *cmd,
             unsigned int   timeout)
 {
   g_mutex_lock(&mutex);
-  char *at_command;
-  char at_response[1024];
+  char *at_command = NULL;
+  char at_response[1024] = {0};
   int serial_file = -1;
   get_int_key("serial_file", &serial_file);
   if (serial_file < 0) {
@@ -210,11 +210,20 @@ void at_cmd(const char    *cmd,
   strcat(at_command, "\r\n");
   write(serial_file, at_command, strlen(at_command));
   sleep(timeout);
-  ssize_t num_bytes = read(serial_file, at_response, sizeof(at_response));
-  if (num_bytes > 0)
+  ssize_t num_bytes = read(serial_file, at_response, sizeof(at_response) - 1);
+  if (num_bytes > 0) {
     at_response[num_bytes] = '\0';
+  } else {
+    at_response[0] = '\0';
+  }
   g_free(*response);
-  *response = (char *) g_malloc(strlen(at_response) * sizeof(char));
+  *response = (char *) g_malloc((strlen(at_response) + 1) * sizeof(char));
+  if (*response == NULL) {
+    sd_journal_send("MESSAGE=AT response allocation error", "PRIORITY=%i", LOG_ERR, NULL);
+    g_free(at_command);
+    g_mutex_unlock(&mutex);
+    return;
+  }
   strcpy(*response, at_response);
   g_free(at_command);
   g_mutex_unlock(&mutex);

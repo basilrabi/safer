@@ -10,6 +10,7 @@
 6. meson
 7. python3-hiredis
 8. python3-redis
+9. redis
 
 The user must be a member of the group `gpio`:
 `sudo adduser $USER gpio`
