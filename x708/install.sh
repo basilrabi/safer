@@ -6,8 +6,8 @@ then
   exit 1
 fi
 
-cp x708-pwr.service /lib/systemd/system/
-cp x708-pwr.sh /usr/local/bin/
-cp x708-softsd.sh /usr/local/bin/
+cp -f x708-pwr.service /lib/systemd/system/
+cp -f xPWR.sh /usr/local/bin/
+cp -f xSoft.sh /usr/local/bin/
 systemctl daemon-reload
 systemctl enable --now x708-pwr.service
