@@ -17,6 +17,11 @@
  *          -4 if failed to open serial connection to the GNSS/GSM HAT
  */
 int main(int argc, char **argv) {
+
+  /* Initialize system time using RTC */
+  system("sudo echo ds1307 0x68 > /sys/class/i2c-adapter/i2c-1/new_device");
+  system("sudo hwclock -s");
+
   GtkApplication *app;
   char *css;
   char serial_str[20];
