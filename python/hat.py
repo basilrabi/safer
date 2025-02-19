@@ -9,14 +9,16 @@ ser = serial.Serial("/dev/ttyS0", 115200)
 
 def cmd(command):
     ser.write(f"{command}\r\n".encode())
-    time.sleep(0.1)
+    time.sleep(2)
     return ser.read(ser.inWaiting()).decode()
 
-if cmd('AT') == '':
+while cmd('AT') == '':
     gpio.setmode(gpio.BCM)
     gpio.setup(4, gpio.OUT)
+    gpio.output(4, True)
     time.sleep(2)
     gpio.output(4, False)
+    time.sleep(2)
     gpio.cleanup()
 
 ser.close()
