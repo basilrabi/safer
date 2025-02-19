@@ -124,7 +124,9 @@ void shutdown_trigger()
       if (serial_file < 0)
         continue;
       close(serial_file);
-      system("sudo /usr/local/bin/x708-softsd.sh");
+      system("systemctl stop --user bat.service");
+      sleep(1);
+      system("sudo /usr/local/bin/xSoft.sh 0 13");
     }
   }
 }
