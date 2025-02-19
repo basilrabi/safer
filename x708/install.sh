@@ -6,8 +6,10 @@ then
   exit 1
 fi
 
+cp -f rtc.service /lib/systemd/system/
 cp -f x708-pwr.service /lib/systemd/system/
 cp -f xPWR.sh /usr/local/bin/
 cp -f xSoft.sh /usr/local/bin/
 systemctl daemon-reload
+systemctl enable --now rtc.service
 systemctl enable --now x708-pwr.service

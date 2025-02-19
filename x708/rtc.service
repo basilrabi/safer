@@ -1,0 +1,13 @@
+[Unit]
+Description=Initialize DS1307 RTC and sync hardware clock
+After=syslog.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c "echo ds1307 0x68 > /sys/class/i2c-adapter/i2c-1/new_device"
+ExecStart=/usr/sbin/hwclock -s
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+
