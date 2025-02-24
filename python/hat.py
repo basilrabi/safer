@@ -12,7 +12,7 @@ def cmd(command):
     time.sleep(2)
     return ser.read(ser.inWaiting()).decode()
 
-while cmd('AT') == '':
+if cmd('AT') == '':
     gpio.setmode(gpio.BCM)
     gpio.setup(4, gpio.OUT)
     gpio.output(4, True)
